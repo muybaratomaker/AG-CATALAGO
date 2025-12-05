@@ -754,21 +754,22 @@ const movies = [
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
 
-    const rows = csv.split("\n").map(r => r.trim()).filter(r => r.length > 0);
-    const headers = rows[0].split(",");
+    const rows = csv.split("\n")
+        .map(r => r.trim())
+        .filter(r => r.length > 0);
 
     const sheetMovies = rows.slice(1).map(row => {
         const cols = row.split(",");
+
         return {
-            title: cols[0]?.trim() || "",
-            type:  cols[1]?.trim() || "movie",
-            search: cols[2]?.trim() || ""
+            title:  cols[0]?.replace(/"/g, "").trim() || "",
+            type:   cols[1]?.replace(/"/g, "").trim() || "movie",
+            search: cols[2]?.replace(/"/g, "").trim() || ""
         };
-    });
+    }).filter(m => m.title !== "");  // elimina righe vuote
 
     console.log("Film caricati da Google:", sheetMovies);
 
-    // ELIMINA DUPLICATI BASANDOSI SUL TITOLO
     const existingTitles = new Set(movies.map(m => m.title.toLowerCase()));
 
     const newOnes = sheetMovies.filter(m => !existingTitles.has(m.title.toLowerCase()));
@@ -777,7 +778,6 @@ const movies = [
 
     movies.push(...newOnes);
 }
-
 /* Titoli da usare come anteprima nella home */
 const HOME_PREVIEW_TITLES = [
   'Fight Club',
@@ -1035,4 +1035,5 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
