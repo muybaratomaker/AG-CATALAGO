@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Catalogo AG</title>
+<style>
+  :root{--accent:#2196F3}
+
+  *{box-sizing:border-box}
+
+  body{
+    margin:0;
+    font-family:Inter, Arial, sans-serif;
+    color:#fff;
+    background:#05060a;
+  }
+
+  /* Sfondo astratto */
+  .bg{
+    position:fixed;inset:0;
+    background:
+      radial-gradient(circle at 10% 0%, #303f9f33 0, transparent 50%),
+      radial-gradient(circle at 90% 100%, #00897b33 0, transparent 55%),
+      radial-gradient(circle at 50% 50%, #1a237e11 0, #000 70%);
+    z-index:-1;
+  }
+
+  /* HOME */
+  #home{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px 20px 60px;
+  }
+  .home-inner{
+    max-width:1100px;
+    width:100%;
+    display:grid;
+    grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr);
+    gap:40px;
+    align-items:center;
+  }
+  @media(max-width:900px){
+    .home-inner{
+      grid-template-columns:1fr;
+      text-align:center;
+    }
+  }
+
+  .home-hero{
+    padding:24px 22px;
+    border-radius:20px;
+    background:linear-gradient(145deg,rgba(0,0,0,0.85),rgba(0,0,0,0.7));
+    box-shadow:0 18px 50px rgba(0,0,0,0.8);
+    border:1px solid rgba(255,255,255,0.04);
+  }
+
+  /* Logo AG */
+  .logo-wrap{
+    display:flex;
+    justify-content:flex-start;
+    margin-bottom:12px;
+  }
+  @media(max-width:900px){
+    .logo-wrap{justify-content:center;}
+  }
+  .logo-ag{
+    width:120px;
+    height:auto;
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,0.8));
+  }
+
+  .home-hero h1{
+    margin:4px 0 8px;
+    font-size:32px;
+    letter-spacing:0.5px;
+    text-shadow:0 2px 8px #000;
+  }
+  .home-subtitle{
+    margin:0 0 8px;
+    font-size:15px;
+    color:#c5cae9;
+    opacity:0.9;
+  }
+  .home-text{
+    margin:0 0 22px;
+    font-size:15px;
+    color:#e0e0e0;
+    line-height:1.5;
+  }
+
+  #home .buttons{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  @media(max-width:900px){
+    #home .buttons{justify-content:center;}
+  }
+
+  .btn{
+    padding:12px 22px;border-radius:999px;border:none;background:rgba(25,118,210,0.18);color:#fff;
+    cursor:pointer;font-size:15px;backdrop-filter: blur(6px);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    background:rgba(33,150,243,0.45);
+  }
+
+  /* HOME PREVIEW */
+  .home-preview{
+    padding:18px 4px;
+  }
+  .home-preview-title{
+    font-size:18px;
+    margin:0 0 10px;
+    text-shadow:0 2px 6px #000;
+  }
+  .home-preview-sub{
+    margin:0 0 16px;
+    font-size:13px;
+    color:#cfd8dc;
+    opacity:0.9;
+  }
+  .home-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:14px;
+  }
+  .home-card{
+    background:rgba(0,0,0,0.65);
+    border-radius:12px;
+    padding:8px;
+    cursor:pointer;
+    transition:transform .15s, box-shadow .15s, background .15s;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .home-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 30px rgba(0,0,0,0.7);
+    background:rgba(0,0,0,0.85);
+  }
+  .home-card img{
+    width:100%;
+    border-radius:9px;
+    margin-bottom:6px;
+  }
+  .home-card .title{
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:2px;
+  }
+  .home-card .meta{
+    font-size:12px;
+    color:#b0bec5;
+  }
+
+/* CATALOGO */
+#catalog{
+  display:none;
+  padding:20px 24px 60px;
+  background:radial-gradient(circle at top,#1a237e33 0,transparent 55%), #020308;
+  min-height:100vh;
+}
+#catalog-title{
+  font-size:26px;
+  margin:8px 0 14px;
+  text-shadow:0 2px 6px #000;
+}
+
+/* Barra superiore: logo + categorie + ricerca */
+.controls{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  flex-wrap:wrap;
+  padding:10px 16px;
+  background:linear-gradient(to bottom, rgba(5,6,15,0.96), rgba(5,6,15,0.9));
+  backdrop-filter:blur(10px);
+}
+
+/* Quando scrolli, nascondi solo la ricerca */
+.controls.scrolled .search{
+  display:none;
+}
+
+/* Logo mini AG */
+.logo-mini{
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  border:none;
+  padding:0;
+  margin:0;
+  background:linear-gradient(135deg,#42a5f5,#7e57c2,#26a69a);
+  color:#fff;
+  font-weight:700;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,0,0,0.5);
+  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+
+.logo-mini:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(0,0,0,0.8);
+  filter:brightness(1.05);
+}
+
+/* Categorie: pillole distanziate */
+.filters{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:14px;
+}
+
+.filters button{
+  background:rgba(255,255,255,0.08);
+  border:none;
+  color:#e0e0e0;
+  padding:7px 16px;
+  border-radius:999px;
+  font-size:14px;
+  cursor:pointer;
+  transition:background .15s ease, transform .15s ease, box-shadow .15s ease, color .15s ease;
+}
+
+.filters button:hover{
+  background:rgba(255,255,255,0.16);
+  transform:translateY(-1px);
+  box-shadow:0 4px 14px rgba(0,0,0,0.6);
+}
+
+.filters button.active{
+  background:var(--accent);
+  color:#ffffff;
+  font-weight:600;
+}
+
+/* Ricerca allineata alla stessa altezza */
+.search{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+.search input{
+  height:36px;
+  padding:0 14px;
+  border-radius:999px;
+  border:none;
+  background:#ffffff;
+  color:#222;
+  min-width:220px;
+  outline:none;
+  font-size:14px;
+}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:18px;
+    width:100%;
+    max-width:1200px;
+  }
+  .card{
+    background:rgba(255,255,255,0.03);
+    border-radius:10px;padding:10px;color:#fff;
+    cursor:pointer;transition:transform .15s, box-shadow .15s;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 12px 30px rgba(0,0,0,0.6);
+  }
+  .card img{width:100%;border-radius:8px;margin-bottom:8px}
+  .title{font-weight:700;margin-bottom:6px}
+  .meta{font-size:13px;color:#ddd}
+
+  /* MODALE */
+  .modal{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+    z-index:9999;align-items:center;justify-content:center;padding:20px
+  }
+  .modal .inner{
+    background:#0f1720;color:#fff;border-radius:12px;padding:20px;
+    max-width:900px;width:100%;max-height:85vh;overflow:auto;
+    box-shadow:0 10px 40px #000;
+  }
+  .modal .close{float:right;font-size:24px;cursor:pointer;color:#bbb}
+  .modal h2{margin-top:6px}
+  .modal p{line-height:1.5;color:#e6e6e6}
+  .cast{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .cast .person{
+    display:flex;flex-direction:column;align-items:center;
+    width:80px;font-size:12px;text-align:center
+  }
+  .cast img{width:64px;height:64px;border-radius:6px;object-fit:cover}
+
+  @media(max-width:640px){
+    .card{padding:8px}
+    .title{font-size:15px}
+  }
+  .catalog-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #42a5f5, #7e57c2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 15px;
+  font-family: Inter, sans-serif;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.45);
+  transition: transform .15s, box-shadow .15s;
+}
+
+.catalog-logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.55);
+}
+/* LOGO AG NELLA BARRA DELLE CATEGORIE */
+.logo-btn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+    transform: scale(0.8);
+    transition: transform .2s ease, opacity .2s ease;
+}
+
+.logo-btn svg {
+    width: 95px;
+    height: auto;
+}
+
+.logo-btn:hover {
+    transform: scale(0.88);
+    opacity: 0.85;
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<!-- HOME -->
+<section id="home">
+  <div class="home-inner">
+    <!-- Colonna sinistra: logo + testo + pulsanti -->
+    <div class="home-hero">
+      <div class="logo-wrap">
+        <!-- LOGO AG in SVG -->
+        <svg class="logo-ag" viewBox="0 0 150 60" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="agGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#42a5f5"/>
+              <stop offset="50%" stop-color="#7e57c2"/>
+              <stop offset="100%" stop-color="#26a69a"/>
+            </linearGradient>
+          </defs>
+          <rect x="4" y="4" rx="14" ry="14" width="142" height="52"
+                fill="url(#agGrad)" opacity="0.96"/>
+          <rect x="7" y="7" rx="12" ry="12" width="136" height="46"
+                fill="rgba(0,0,0,0.35)"/>
+          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                fill="#ffffff" font-size="30" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+                font-weight="700" letter-spacing="2">
+            AG
+          </text>
+        </svg>
+      </div>
+
+      <h1>Catalogo AG</h1>
+      <p class="home-subtitle">La nostra collezione di film e serie visti dal 2020.</p>
+      <p class="home-text">
+        Scegli se esplorare solo i <strong>film</strong> oppure le <strong>serie TV</strong>.<br>
+        Nelle pagine del catalogo puoi filtrare per genere (commedia, azione, horror, ecc.),
+        cercare per titolo e aprire ogni scheda per vedere <em>trama</em> e <em>cast</em>.
+      </p>
+
+      <div class="buttons">
+        <button class="btn" onclick="openCatalog('movie')">Vai ai Film</button>
+        <button class="btn" onclick="openCatalog('tv')">Vai alle Serie TV</button>
+      </div>
+    </div>
+
+    <!-- Colonna destra: anteprima titoli -->
+    <div class="home-preview">
+      <h2 class="home-preview-title">Qualche titolo dalla collezione</h2>
+      <p class="home-preview-sub">
+        Un assaggio veloce di film e serie che abbiamo già visto. Clicca per aprire
+        la scheda con trama e cast.
+      </p>
+      <div class="home-grid" id="homeGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CATALOGO -->
+<section id="catalog">
+  <div style="display:flex;flex-direction:column;align-items:center">
+    <div id="catalog-title">Catalogo</div>
+
+<div class="controls">
+
+    <!-- Logo AG mini = torna alla home -->
+    <button class="logo-mini" onclick="tornaHome()">AG</button>
+
+    <!-- Categorie -->
+    <div class="filters" id="filters"></div>
+
+    <!-- Ricerca -->
+    <div class="search">
+        <input id="searchInput" placeholder="Cerca per titolo..." />
+    </div>
+
+</div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- MODALE -->
+<div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
+  <div class="inner" role="dialog" aria-modal="true">
+    <div class="close" id="closeBtn">&times;</div>
+    <h2 id="modalTitle"></h2>
+    <p id="modalOverview"></p>
+    <h4>Cast principale</h4>
+    <div class="cast" id="modalCast"></div>
+  </div>
+</div>
+
+<script>
+const API_KEY  = '9298687fa5e1f883f34db8ce4844c806';
+const API_BASE = 'https://api.themoviedb.org/3';
+
+/* Categorie manuali basate sui generi TMDb */
+const CATEGORY_DEFS = [
+  { key:'Commedia',   ids:[35] },
+  { key:'Thriller',   ids:[53,80,9648] },   // thriller, crime, mystery
+  { key:'Horror',     ids:[27] },
+  { key:'Azione',     ids:[28,10759] },     // film + serie azione/avventura
+  { key:'Sci-Fi',     ids:[878,10765] },    // sci-fi e sci-fi & fantasy
+  { key:'Animazione', ids:[16] }
+];
+
+let activeCategory     = null;
+let currentCatalogType = null;
+
+const filtersDiv   = document.getElementById('filters');
+const grid         = document.getElementById('grid');
+const searchInput  = document.getElementById('searchInput');
+const modal        = document.getElementById('modal');
+const modalTitle   = document.getElementById('modalTitle');
+const modalOverview= document.getElementById('modalOverview');
+const modalCast    = document.getElementById('modalCast');
+const catalogTitle = document.getElementById('catalog-title');
+const homeGrid     = document.getElementById('homeGrid');
+
+document.getElementById('closeBtn').onclick = closeModal;
+
+/* LISTA COMPLETA FILM / SERIE */
+const movies = [
+  // Adam Sandler
+  { title:'Un weekend da bamboccioni', type:'movie' },
+  { title:'Un weekend da bamboccioni 2', type:'movie' },
+  { title:'Mia moglie per finta', type:'movie' },
+  { title:'Murder Mystery', type:'movie' },
+  { title:'Murder Mystery 2', type:'movie' },
+  { title:'Hustle', type:'movie'},
+  { title:'Pixel', type:'movie'},
+  { title:'Cambia la tua vita con un click', type:'movie'},
+  { title:'Matrimonio a Long Island', type:'movie'},
+  { title:'Mr. Cobbler e la bottega magica', type:'movie'},
+  { title:'L’altra sporca ultima meta', type:'movie', search:'The Longest Yard'},
+  { title:'Terapia d’urto', type:'movie'},
+  { title:'The Do Over', type:'movie'},
+
+  // Bradley Cooper
+  { title:'Il sapore del successo', type:'movie'},
+  { title:'American Sniper', type:'movie'},
+  { title:'Limitless', type:'movie'},
+  { title:'Una notte da leoni', type:'movie'},
+
+  // Jason Statham
+  { title:'Operation Fortune', type:'movie', search:'Operation Fortune: Ruse de Guerre'},
+  { title:'Hobbs & Shaw', type:'movie', search:'Fast & Furious Presents: Hobbs & Shaw'},
+  { title:'Fast & Furious 10', type:'movie', search:'Fast X'},
+  { title:'Fast & Furious: Tokyo Drift', type:'movie', search:'The Fast and the Furious: Tokyo Drift'},
+  { title:'Homefront', type:'movie'},
+  { title:'Joker: Wild Card', type:'movie', search:'Wild Card'},
+  { title:'Crank', type:'movie'},
+
+  // Daniel Craig
+  { title:'007 - Skyfall', type:'movie', search:'Skyfall'},
+  { title:'007 - Casino Royale', type:'movie', search:'Casino Royale'},
+  { title:'Glass Onion', type:'movie', search:'Glass Onion: A Knives Out Mystery'},
+  { title:'Cena con delitto', type:'movie', search:'Knives Out'},
+
+  // Ryan Reynolds
+  { title:'Adam Project', type:'movie', search:'The Adam Project'},
+  { title:'Deadpool', type:'movie'},
+  { title:'Deadpool 2', type:'movie'},
+  { title:'Free Guy', type:'movie'},
+  { title:'Red Notice', type:'movie'},
+  { title:'Come ti ammazzo il bodyguard', type:'movie', search:"The Hitman's Bodyguard"},
+
+  // Brad Pitt
+  { title:'Mr. & Mrs. Smith', type:'movie'},
+  { title:'Bullet Train', type:'movie'},
+  { title:'Fight Club', type:'movie'},
+  { title:'Il curioso caso di Benjamin Button', type:'movie'},
+
+  // Leonardo DiCaprio
+  { title:"Don't Look Up", type:'movie'},
+  { title:'Shutter Island', type:'movie'},
+  { title:'The Wolf of Wall Street', type:'movie'},
+  { title:'Prova a prendermi', type:'movie', search:'Catch Me If You Can'},
+
+  // Margot Robbie
+  { title:'Babylon', type:'movie'},
+  { title:'Suicide Squad', type:'movie'},
+  { title:'Barbie', type:'movie'},
+  { title:'Focus', type:'movie'},
+
+  // Will Smith
+  { title:'La ricerca della felicità', type:'movie', search:'The Pursuit of Happyness'},
+  { title:'Bad Boys', type:'movie'},
+  { title:'Men in Black', type:'movie'},
+  { title:'Aladdin (live-action)', type:'movie', search:'Aladdin'},
+
+  // Harry Potter
+  { title:'Harry Potter e la pietra filosofale', type:'movie'},
+  { title:'Harry Potter e la camera dei segreti', type:'movie'},
+  { title:'Harry Potter e il prigioniero di Azkaban', type:'movie'},
+  { title:'Harry Potter e il calice di fuoco', type:'movie'},
+  { title:'Harry Potter e l\'Ordine della Fenice', type:'movie'},
+  { title:'Harry Potter e il Principe Mezzosangue', type:'movie'},
+  { title:'Harry Potter e i Doni della Morte - Parte 1', type:'movie'},
+  { title:'Harry Potter e i Doni della Morte - Parte 2', type:'movie'},
+
+  // Italiani vari
+  { title:'Sole a catinelle', type:'movie'},
+  { title:'Che bella giornata', type:'movie'},
+  { title:'Quo Vado?', type:'movie'},
+  { title:'Odio l\'estate', type:'movie'},
+  { title:'Principe abusivo', type:'movie'},
+  { title:'Chi ha incastrato Babbo Natale?', type:'movie'},
+  { title:'Checco Zalone - Tutti i film', type:'movie'}, // generico
+  { title:'Una festa esagerata', type:'movie'},
+  { title:'Finalmente la felicità', type:'movie'},
+  { title:'Ma che bella sorpresa', type:'movie'},
+  { title:'Johnny Stecchino', type:'movie'},
+
+  // Vari
+  { title:'Hunger Games', type:'movie', search:'The Hunger Games'},
+  { title:'Pirati dei Caraibi - La maledizione della prima luna', type:'movie', search:'Pirates of the Caribbean: The Curse of the Black Pearl'},
+  { title:'Pirati dei Caraibi - La maledizione del forziere fantasma', type:'movie', search:"Pirates of the Caribbean: Dead Man's Chest"},
+  { title:'Alice in Wonderland', type:'movie'},
+  { title:'The Truman Show', type:'movie'},
+  { title:'The Menu', type:'movie'},
+  { title:'Pretty Woman', type:'movie'},
+  { title:'Il diavolo veste Prada', type:'movie'},
+  { title:'Quasi amici', type:'movie', search:'Intouchables'},
+  { title:'Matrix', type:'movie'},
+  { title:'Rocky', type:'movie'},
+  { title:'Il buco', type:'movie'},
+  { title:'Noi', type:'movie', search:'Us'},
+  { title:'Avatar', type:'movie'},
+  { title:'Avatar: La via dell\'acqua', type:'movie', search:'Avatar: The Way of Water'},
+  { title:'21', type:'movie'},
+  { title:'Come ti ammazzo il capo', type:'movie', search:'Horrible Bosses'},
+  { title:'Runner Runner', type:'movie'},
+  { title:'Parasite', type:'movie'},
+  { title:'Spider-Man: Homecoming', type:'movie'},
+  { title:'Adaline - L\'eterna giovinezza', type:'movie', search:'The Age of Adaline'},
+  { title:'La grande scommessa', type:'movie', search:'The Big Short'},
+  { title:'Un poliziotto in prova', type:'movie', search:'Ride Along'},
+  { title:'Un poliziotto in prova 2', type:'movie', search:'Ride Along 2'},
+  { title:'Piacere Dave', type:'movie', search:'Meet Dave'},
+  { title:'Una spia e mezzo', type:'movie', search:'Central Intelligence'},
+  { title:'Escape Plan', type:'movie'},
+  { title:'Next', type:'movie'},
+  { title:'Halloween Ends', type:'movie'},
+  { title:'Beast', type:'movie'},
+  { title:'Air Jordan', type:'movie', search:'Air'},
+  { title:'Adidas vs Puma', type:'movie', search:"Adidas vs. Puma: The Brother's Feud"},
+  { title:'The Whale', type:'movie'},
+  { title:'Everything Everywhere All at Once', type:'movie'},
+  { title:'Masterminds', type:'movie'},
+  { title:'Insospettabili sospetti', type:'movie', search:'Going in Style'},
+  { title:'Now You See Me', type:'movie'},
+  { title:'Now You See Me 2', type:'movie'},
+  { title:'Now You See Me 3', type:'movie'}, // se non esiste: "non trovato"
+  { title:'Richie Rich', type:'movie'},
+  { title:'Il silenzio degli innocenti', type:'movie'},
+  { title:'Jobs', type:'movie'},
+  { title:'La piccola Boss', type:'movie'},
+  { title:'Game Night', type:'movie'},
+  { title:'Split', type:'movie'},
+  { title:'Meg 1', type:'movie', search:'The Meg'},
+  { title:'FNAF', type:'movie', search:'Five Nights at Freddy\'s'},
+  { title:'Mamma, ho perso l\'aereo', type:'movie', search:'Home Alone'},
+  { title:'Mamma, ho perso l\'aereo 2', type:'movie', search:'Home Alone 2: Lost in New York'},
+  { title:'Knock Knock', type:'movie'},
+  { title:'Megan', type:'movie', search:'M3GAN'},
+  { title:'Donnie Darko', type:'movie'},
+  { title:'Saw - L\'eredità', type:'movie'},
+  { title:'21 Jump Street', type:'movie'},
+  { title:'You People', type:'movie'},
+  { title:'American Psycho', type:'movie'},
+  { title:'Countdown', type:'movie'},
+  { title:'Top Gun: Maverick', type:'movie'},
+  { title:'57 Seconds', type:'movie'},
+  { title:'Gran Turismo', type:'movie'},
+  { title:'I Fantastici 4', type:'movie', search:'Fantastic Four'},
+  { title:'Inception', type:'movie'},
+  { title:'Nonno scatenato', type:'movie', search:'Dirty Grandpa'},
+  { title:'One Hour Photo', type:'movie'},
+  { title:'Superhero', type:'movie', search:'Superhero Movie'},
+  { title:'Ocean\'s 8', type:'movie'},
+  { title:'What Men Want', type:'movie'},
+  { title:'Idiocracy', type:'movie'},
+  { title:'Operazione vendetta', type:'movie', search:'Wrath of Man'},
+  { title:'John Wick', type:'movie'},
+  { title:'John Wick 2', type:'movie'},
+  { title:'Predator: Badlands', type:'movie', search:'Predators'},
+  { title:'Family Switch', type:'movie'},
+
+  // Cartoni
+  { title:'Shrek', type:'movie'},
+  { title:'Shrek 2', type:'movie'},
+  { title:'Shrek 4', type:'movie', search:'Shrek Forever After'},
+  { title:'Madagascar', type:'movie'},
+  { title:'Madagascar 2', type:'movie', search:'Madagascar: Escape 2 Africa'},
+  { title:'Luca', type:'movie'},
+  { title:'El Dorado', type:'movie', search:'The Road to El Dorado'},
+  { title:'Coco', type:'movie'},
+  { title:'Alla ricerca di Nemo', type:'movie', search:'Finding Nemo'},
+  { title:'Toy Story', type:'movie'},
+  { title:'Lilo & Stitch', type:'movie'},
+  { title:'Lilo & Stitch 2', type:'movie'},
+  { title:'Chicken Little', type:'movie'},
+  { title:'Ratatouille', type:'movie'},
+  { title:'Dragon Trainer', type:'movie', search:'How to Train Your Dragon'},
+  { title:'Dragon Trainer 2', type:'movie', search:'How to Train Your Dragon 2'},
+  { title:'Monster & Co', type:'movie', search:'Monsters, Inc.'},
+  { title:'Mostri contro alieni', type:'movie', search:'Monsters vs Aliens'},
+  { title:'Gli Incredibili', type:'movie', search:'The Incredibles'},
+  { title:'Gli Incredibili 2', type:'movie', search:'Incredibles 2'},
+  { title:'Super Mario', type:'movie', search:'The Super Mario Bros. Movie'},
+  { title:'Inside Out', type:'movie'},
+  { title:'Inside Out 2', type:'movie'},
+  { title:'Up', type:'movie'},
+  { title:'Kung Fu Panda', type:'movie'},
+  { title:'Kung Fu Panda 2', type:'movie'},
+  { title:'Kung Fu Panda 3', type:'movie'},
+  { title:'Kung Fu Panda 4', type:'movie'},
+  { title:'Bolt', type:'movie'},
+  { title:'Uno zoo in fuga', type:'movie'},
+  { title:'Hercules', type:'movie'},
+  { title:'Il pianeta del tesoro', type:'movie'},
+  { title:'Frozen', type:'movie'},
+  { title:'La bella e la bestia', type:'movie'},
+  { title:'Biancaneve', type:'movie', search:'Snow White and the Seven Dwarfs'},
+  { title:'La bella addormentata nel bosco', type:'movie', search:'Sleeping Beauty'},
+  { title:'Rapunzel', type:'movie', search:'Tangled'},
+
+  // MCU / Marvel + Spider-Man
+  { title:'Iron Man', type:'movie'},
+  { title:'L\'Incredibile Hulk', type:'movie'},
+  { title:'Iron Man 2', type:'movie'},
+  { title:'Thor', type:'movie'},
+  { title:'Captain America: Il Primo Vendicatore', type:'movie', search:'Captain America: The First Avenger'},
+  { title:'Avengers', type:'movie', search:'The Avengers'},
+  { title:'Iron Man 3', type:'movie'},
+  { title:'Thor: The Dark World', type:'movie'},
+  { title:'Captain America: The Winter Soldier', type:'movie'},
+  { title:'Guardiani della Galassia', type:'movie', search:'Guardians of the Galaxy'},
+  { title:'Avengers: Age of Ultron', type:'movie'},
+  { title:'Ant-Man', type:'movie'},
+  { title:'Captain America: Civil War', type:'movie'},
+  { title:'Doctor Strange', type:'movie'},
+  { title:'Guardiani della Galassia Vol. 2', type:'movie', search:'Guardians of the Galaxy Vol. 2'},
+  { title:'Spider-Man: Homecoming', type:'movie'},
+  { title:'Thor: Ragnarok', type:'movie'},
+  { title:'Black Panther', type:'movie'},
+  { title:'Ant-Man and the Wasp', type:'movie'},
+  { title:'Avengers: Infinity War', type:'movie'},
+  { title:'Captain Marvel', type:'movie'},
+  { title:'Avengers: Endgame', type:'movie'},
+  { title:'Spider-Man: Far From Home', type:'movie'},
+  { title:'Deadpool e Wolverine', type:'movie'},
+  { title:'Spider-Man: No Way Home', type:'movie'},
+  { title:'Spider-Man', type:'movie'},
+  { title:'Spider-Man 2', type:'movie'},
+  { title:'Spider-Man 3', type:'movie'},
+
+  // SERIE TV
+  { title:'La casa di carta', type:'tv', search:'Money Heist'},
+  { title:'Jessica Jones', type:'tv'},
+  { title:'Stranger Things', type:'tv'},
+  { title:'Lucifer', type:'tv'},
+  { title:'The Defenders', type:'tv'},
+  { title:'Lupin', type:'tv'},
+  { title:'The Crown', type:'tv'},
+  { title:'The Boys', type:'tv'},
+  { title:'Caleidoscopio', type:'tv', search:'Kaleidoscope'},
+  { title:'Dahmer', type:'tv', search:'Dahmer - Monster: The Jeffrey Dahmer Story'},
+  { title:'Mercoledì', type:'tv', search:'Wednesday'},
+  { title:'Sneaky Pete', type:'tv'},
+  { title:'Mr. Robot', type:'tv'},
+  { title:'Alice in Borderland', type:'tv'},
+  { title:'Squid Game', type:'tv'},
+  { title:'Non siamo più vivi', type:'tv', search:'All of Us Are Dead'},
+  { title:'Death Note', type:'tv'},
+  { title:'Good Omens', type:'tv'},
+  { title:'Cleopatra', type:'tv'},
+  { title:'The Fresh Prince of Bel-Air', type:'tv'},
+  { title:'Suits', type:'tv'},
+  { title:'Squid Game - La Sfida', type:'tv', search:'Squid Game: The Challenge'},
+  { title:'La Regina degli Scacchi', type:'tv', search:"The Queen's Gambit"},
+  { title:'Berlin', type:'tv', search:'Berlin'},
+  { title:'LOL', type:'tv'},
+  { title:'Man vs Bee', type:'tv'},
+  { title:'Dinner Club', type:'tv'},
+  { title:'Bruno Barbieri 4 Hotel', type:'tv'},
+  { title:'Case a Prima Vista', type:'tv'},
+  { title:'MasterChef', type:'tv'},
+  { title:'Beast Games', type:'tv'}
+];
+
+/* Titoli da usare come anteprima nella home */
+const HOME_PREVIEW_TITLES = [
+  'Fight Club',
+  'Harry Potter e la pietra filosofale',
+  'Shrek',
+  'Stranger Things',
+  'The Boys',
+  'Matrix'
+];
+
+/* HOME -> CATALOGO */
+async function openCatalog(type){
+  document.getElementById('home').style.display='none';
+  document.getElementById('catalog').style.display='block';
+  catalogTitle.textContent = type === 'movie' ? 'Film' : 'Serie TV';
+  currentCatalogType = type;
+  activeCategory     = null;
+  await renderGrid(type);
+}
+
+/* RENDER GRID (ordinata alfabeticamente) */
+async function renderGrid(type){
+  grid.innerHTML = 'Caricamento...';
+  const q = searchInput.value.trim().toLowerCase();
+
+  grid.innerHTML = '';
+
+  const list = movies
+    .filter(m => m.type === type)
+    .sort((a,b) => a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
+
+  for(const m of list){
+    if (q && !m.title.toLowerCase().includes(q)) continue;
+    await addCardFor(m);
+  }
+
+  renderCategoryFilters();
+  filterGrid();
+}
+
+/* CREA CARD + associa categorie (catalogo) */
+async function addCardFor(m){
+  try{
+    const typePath = m.type === 'movie' ? 'movie' : 'tv';
+    const query    = encodeURIComponent(m.search || m.title);
+    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=it-IT&query=${query}&page=1`;
+    const res      = await fetch(url);
+    const data     = await res.json();
+
+    let item = null;
+    if (data.results && data.results.length > 0) {
+      item = data.results[0];
+    }
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    if (!item){
+      card.dataset.categories = JSON.stringify([]);
+      card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
+      grid.appendChild(card);
+      return;
+    }
+
+    const poster   = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+    const genreIds = item.genre_ids || [];
+
+    // mappo i generi TMDb nelle categorie custom
+    const cats = [];
+    CATEGORY_DEFS.forEach(def => {
+      if (def.ids.some(id => genreIds.includes(id))) {
+        cats.push(def.key);
+      }
+    });
+
+    card.dataset.categories = JSON.stringify(cats);
+    card.dataset.tmdbId     = item.id;
+    card.dataset.type       = m.type;
+
+    const year = m.type === 'movie'
+      ? (item.release_date  ? item.release_date.substring(0,4)  : '')
+      : (item.first_air_date? item.first_air_date.substring(0,4): '');
+
+    card.innerHTML = `
+      ${poster ? `<img src="${item.poster_path ? 'https://image.tmdb.org/t/p/w500'+item.poster_path : ''}" alt="${item.title || item.name}">` : ''}
+      <div class="title">${m.title}</div>
+      <div class="meta">${year}</div>
+    `;
+    card.onclick = () => showDetails(item.id, m.type);
+    grid.appendChild(card);
+  }catch(e){
+    console.error('Errore fetch card', e);
+  }
+}
+
+/* BOTTONI CATEGORIA SEMPRE VISIBILI */
+function renderCategoryFilters(){
+  filtersDiv.innerHTML = '';
+
+  const btnAll = document.createElement('button');
+  btnAll.textContent = 'Tutti';
+  if (!activeCategory) btnAll.classList.add('active');
+  btnAll.onclick = () => setActiveCategory(null);
+  filtersDiv.appendChild(btnAll);
+
+  CATEGORY_DEFS.forEach(def => {
+    const b = document.createElement('button');
+    b.textContent = def.key;
+    if (activeCategory === def.key) b.classList.add('active');
+    b.onclick = () => setActiveCategory(def.key);
+    filtersDiv.appendChild(b);
+  });
+}
+function setActiveCategory(cat){
+  activeCategory = cat;
+  document.querySelectorAll('#filters button').forEach(b => b.classList.remove('active'));
+  const btns = [...document.querySelectorAll('#filters button')];
+  const found = btns.find(b => (!cat && b.textContent === 'Tutti') || b.textContent === cat);
+  if (found) found.classList.add('active');
+  filterGrid();
+}
+
+/* FILTRO VISIVO (catalogo) */
+function filterGrid(){
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    if (!activeCategory){
+      card.style.display = 'block';
+      return;
+    }
+    const cats = JSON.parse(card.dataset.categories || '[]');
+    card.style.display = cats.includes(activeCategory) ? 'block' : 'none';
+  });
+}
+
+/* DETTAGLI MODALE */
+async function showDetails(id, type){
+  try{
+    const url = `${API_BASE}/${type}/${id}?api_key=${API_KEY}&language=it-IT&append_to_response=credits`;
+    const res = await fetch(url);
+    const data = await res.json();
+    modalTitle.textContent   = data.title || data.name;
+    modalOverview.textContent= data.overview || 'Trama non disponibile in italiano.';
+    modalCast.innerHTML      = '';
+
+    if (data.credits && data.credits.cast) {
+      data.credits.cast.slice(0,8).forEach(c => {
+        const div  = document.createElement('div');
+        div.className='person';
+        const img  = document.createElement('img');
+        img.src    = c.profile_path ? `https://image.tmdb.org/t/p/w200${c.profile_path}` : 'https://via.placeholder.com/64x64?text=No';
+        const span = document.createElement('span');
+        span.textContent = c.name;
+        div.appendChild(img);
+        div.appendChild(span);
+        modalCast.appendChild(div);
+      });
+    }
+    modal.style.display='flex';
+  }catch(e){
+    console.error('Errore dettagli', e);
+    alert('Errore nel caricamento dei dettagli');
+  }
+}
+
+function closeModal(){ modal.style.display='none'; }
+
+/* HOME / RESET / RICERCA */
+function tornaHome(){
+  document.getElementById('catalog').style.display='none';
+  document.getElementById('home').style.display='flex';
+  searchInput.value = '';
+  activeCategory    = null;
+  currentCatalogType= null;
+}
+
+/* Reset filtri nel catalogo */
+function resetFilters(){
+  searchInput.value = '';
+  activeCategory    = null;
+  if (currentCatalogType) renderGrid(currentCatalogType);
+}
+
+/* Ricerca live nel catalogo */
+searchInput.addEventListener('input', () => {
+  if (currentCatalogType) renderGrid(currentCatalogType);
+});
+
+/* ----------------- ANTEPRIMA HOME ------------------- */
+async function renderHomePreview(){
+  if (!homeGrid) return;
+  homeGrid.innerHTML = '';
+
+  const chosen = movies.filter(m => HOME_PREVIEW_TITLES.includes(m.title));
+
+  for (const m of chosen){
+    await addHomeCardFor(m);
+  }
+}
+
+/* Card per la home (usa stessa API, ma griglia diversa) */
+async function addHomeCardFor(m){
+  try{
+    const typePath = m.type === 'movie' ? 'movie' : 'tv';
+    const query    = encodeURIComponent(m.search || m.title);
+    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=it-IT&query=${query}&page=1`;
+    const res      = await fetch(url);
+    const data     = await res.json();
+
+    let item = null;
+    if (data.results && data.results.length > 0) {
+      item = data.results[0];
+    }
+
+    const card = document.createElement('div');
+    card.className = 'home-card';
+
+    if (!item){
+      card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
+      homeGrid.appendChild(card);
+      return;
+    }
+
+    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
+    const year   = m.type === 'movie'
+      ? (item.release_date  ? item.release_date.substring(0,4)  : '')
+      : (item.first_air_date? item.first_air_date.substring(0,4): '');
+
+    card.innerHTML = `
+      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
+      <div class="title">${m.title}</div>
+      <div class="meta">${m.type === 'movie' ? 'Film' : 'Serie TV'} ${year ? '· '+year : ''}</div>
+    `;
+    card.onclick = () => showDetails(item.id, m.type);
+    homeGrid.appendChild(card);
+  }catch(e){
+    console.error('Errore anteprima home', e);
+  }
+}
+
+/* Avvio: render anteprima home */
+renderHomePreview();
+/* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
+window.addEventListener("scroll", () => {
+    const bar = document.querySelector(".controls");
+    if(window.scrollY > 80){
+        bar.classList.add("scrolled");
+    } else {
+        bar.classList.remove("scrolled");
+    }
+});
+</script>
+</body>
+</html>
