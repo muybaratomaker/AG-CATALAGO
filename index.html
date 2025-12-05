@@ -748,6 +748,35 @@ const movies = [
   { title:'MasterChef', type:'tv'},
   { title:'Beast Games', type:'tv'}
 ];
+  async function loadMoviesFromSheet() {
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
+
+    const res = await fetch(SHEET_URL);
+    const csv = await res.text();
+
+    const rows = csv.split("\n").map(r => r.trim()).filter(r => r.length > 0);
+    const headers = rows[0].split(",");
+
+    const sheetMovies = rows.slice(1).map(row => {
+        const cols = row.split(",");
+        return {
+            title: cols[0]?.trim() || "",
+            type:  cols[1]?.trim() || "movie",
+            search: cols[2]?.trim() || ""
+        };
+    });
+
+    console.log("Film caricati da Google:", sheetMovies);
+
+    // ELIMINA DUPLICATI BASANDOSI SUL TITOLO
+    const existingTitles = new Set(movies.map(m => m.title.toLowerCase()));
+
+    const newOnes = sheetMovies.filter(m => !existingTitles.has(m.title.toLowerCase()));
+
+    console.log("Aggiunti:", newOnes);
+
+    movies.push(...newOnes);
+}
 
 /* Titoli da usare come anteprima nella home */
 const HOME_PREVIEW_TITLES = [
@@ -989,8 +1018,11 @@ async function addHomeCardFor(m){
   }
 }
 
-/* Avvio: render anteprima home */
-renderHomePreview();
+/* AVVIO COMPLETO */
+(async () => {
+    await loadMoviesFromSheet();   // prende i film dal foglio Google
+    await renderHomePreview();     // aggiorna la home
+})();
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
 window.addEventListener("scroll", () => {
     const bar = document.querySelector(".controls");
@@ -1003,3 +1035,4 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
