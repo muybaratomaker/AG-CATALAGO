@@ -792,6 +792,7 @@ const HOME_PREVIEW_TITLES = [
 async function openCatalog(type){
   document.getElementById('home').style.display='none';
   document.getElementById('catalog').style.display='block';
+  await loadMoviesFromSheet();
   catalogTitle.textContent = type === 'movie' ? 'Film' : 'Serie TV';
   currentCatalogType = type;
   activeCategory     = null;
@@ -1035,5 +1036,6 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
