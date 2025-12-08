@@ -792,7 +792,7 @@ const HOME_PREVIEW_TITLES = [
 async function openCatalog(type){
   document.getElementById('home').style.display='none';
   document.getElementById('catalog').style.display='block';
-  await loadMoviesFromSheet();
+  //await loadMoviesFromSheet();
  catalogTitle.textContent =
     type === 'movie' ? 'Film' :
     type === 'tv'    ? 'Serie TV' :
@@ -1040,6 +1040,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
