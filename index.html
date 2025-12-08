@@ -396,10 +396,11 @@
         cercare per titolo e aprire ogni scheda per vedere <em>trama</em> e <em>cast</em>.
       </p>
 
-      <div class="buttons">
-        <button class="btn" onclick="openCatalog('movie')">Vai ai Film</button>
-        <button class="btn" onclick="openCatalog('tv')">Vai alle Serie TV</button>
-      </div>
+<div class="buttons">
+    <button class="btn" onclick="openCatalog('movie')">Vai ai Film</button>
+    <button class="btn" onclick="openCatalog('tv')">Vai alle Serie TV</button>
+    <button class="btn" onclick="openCatalog('todo')">Film da vedere</button>
+</div>
     </div>
 
     <!-- Colonna destra: anteprima titoli -->
@@ -793,7 +794,11 @@ async function openCatalog(type){
   document.getElementById('home').style.display='none';
   document.getElementById('catalog').style.display='block';
   await loadMoviesFromSheet();
-  catalogTitle.textContent = type === 'movie' ? 'Film' : 'Serie TV';
+ catalogTitle.textContent =
+    type === 'movie' ? 'Film' :
+    type === 'tv'    ? 'Serie TV' :
+    type === 'todo'  ? 'Film da vedere' :
+                       'Catalogo';
   currentCatalogType = type;
   activeCategory     = null;
   await renderGrid(type);
@@ -1036,6 +1041,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
