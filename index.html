@@ -491,7 +491,7 @@ const movies = [
   { title:'Murder Mystery', type:'movie' },
   { title:'Murder Mystery 2', type:'movie' },
   { title:'Hustle', type:'movie'},
-  { title:'Pixel', type:'movie'},
+  { title:'Pixels', type:'movie', search:'Pixels 2015' },
   { title:'Cambia la tua vita con un click', type:'movie'},
   { title:'Matrimonio a Long Island', type:'movie'},
   { title:'Mr. Cobbler e la bottega magica', type:'movie'},
@@ -549,7 +549,7 @@ const movies = [
   // Will Smith
   { title:'La ricerca della felicità', type:'movie', search:'The Pursuit of Happyness'},
   { title:'Bad Boys', type:'movie'},
-  { title:'Men in Black', type:'movie'},
+  { title:'Men in Black', type:'movie', search:'Men in Black 1997'},
   { title:'Aladdin (live-action)', type:'movie', search:'Aladdin'},
 
   // Harry Potter
@@ -569,7 +569,6 @@ const movies = [
   { title:'Odio l\'estate', type:'movie'},
   { title:'Principe abusivo', type:'movie'},
   { title:'Chi ha incastrato Babbo Natale?', type:'movie'},
-  { title:'Checco Zalone - Tutti i film', type:'movie'}, // generico
   { title:'Una festa esagerata', type:'movie'},
   { title:'Finalmente la felicità', type:'movie'},
   { title:'Ma che bella sorpresa', type:'movie'},
@@ -585,9 +584,9 @@ const movies = [
   { title:'Pretty Woman', type:'movie'},
   { title:'Il diavolo veste Prada', type:'movie'},
   { title:'Quasi amici', type:'movie', search:'Intouchables'},
-  { title:'Matrix', type:'movie'},
+  { title:'Matrix', type:'movie', search:'The Matrix 1999'},
   { title:'Rocky', type:'movie'},
-  { title:'Il buco', type:'movie'},
+  { title:'Il buco', type:'movie', search:'El hoyo 2019' },
   { title:'Noi', type:'movie', search:'Us'},
   { title:'Avatar', type:'movie'},
   { title:'Avatar: La via dell\'acqua', type:'movie', search:'Avatar: The Way of Water'},
@@ -605,7 +604,7 @@ const movies = [
   { title:'Escape Plan', type:'movie'},
   { title:'Next', type:'movie'},
   { title:'Halloween Ends', type:'movie'},
-  { title:'Beast', type:'movie'},
+  { title:'Beast', type:'movie', search:'Beast 2022'},
   { title:'Air Jordan', type:'movie', search:'Air'},
   { title:'Adidas vs Puma', type:'movie', search:"Adidas vs. Puma: The Brother's Feud"},
   { title:'The Whale', type:'movie'},
@@ -614,7 +613,7 @@ const movies = [
   { title:'Insospettabili sospetti', type:'movie', search:'Going in Style'},
   { title:'Now You See Me', type:'movie'},
   { title:'Now You See Me 2', type:'movie'},
-  { title:'Now You See Me 3', type:'movie'}, // se non esiste: "non trovato"
+  { title:'Now You See Me 3', type:'movie', search:'L illusione perfetta - Now You See Me: Now You Dont (2025)'},
   { title:'Richie Rich', type:'movie'},
   { title:'Il silenzio degli innocenti', type:'movie'},
   { title:'Jobs', type:'movie'},
@@ -622,8 +621,8 @@ const movies = [
   { title:'Game Night', type:'movie'},
   { title:'Split', type:'movie'},
   { title:'Meg 1', type:'movie', search:'The Meg'},
-  { title:'FNAF', type:'movie', search:'Five Nights at Freddy\'s'},
-  { title:'Mamma, ho perso l\'aereo', type:'movie', search:'Home Alone'},
+  { title:'FNAF', type:'movie', search:"Five Nights at Freddy's 2023"},
+  { title:'Mamma, ho perso l\'aereo', type:'movie',, search:'Home Alone 1990'},
   { title:'Mamma, ho perso l\'aereo 2', type:'movie', search:'Home Alone 2: Lost in New York'},
   { title:'Knock Knock', type:'movie'},
   { title:'Megan', type:'movie', search:'M3GAN'},
@@ -645,9 +644,9 @@ const movies = [
   { title:'What Men Want', type:'movie'},
   { title:'Idiocracy', type:'movie'},
   { title:'Operazione vendetta', type:'movie', search:'Wrath of Man'},
-  { title:'John Wick', type:'movie'},
+  { title:'John Wick', type:'movie', search:'John Wick 2014'},
   { title:'John Wick 2', type:'movie'},
-  { title:'Predator: Badlands', type:'movie', search:'Predators'},
+  { title:'Predator: Badlands', type:'movie', search:'Predator: Badlands (2025)'},
   { title:'Family Switch', type:'movie'},
 
   // Cartoni
@@ -681,12 +680,12 @@ const movies = [
   { title:'Kung Fu Panda 4', type:'movie'},
   { title:'Bolt', type:'movie'},
   { title:'Uno zoo in fuga', type:'movie'},
-  { title:'Hercules', type:'movie'},
+  { title:'Hercules', type:'movie', search:'Hercules 1997 Disney'},
   { title:'Il pianeta del tesoro', type:'movie'},
   { title:'Frozen', type:'movie'},
-  { title:'La bella e la bestia', type:'movie'},
+  { title:'La bella e la bestia', type:'movie', search:'Sleeping Beauty 1959'},
   { title:'Biancaneve', type:'movie', search:'Snow White and the Seven Dwarfs'},
-  { title:'La bella addormentata nel bosco', type:'movie', search:'Sleeping Beauty'},
+  { title:'La bella addormentata nel bosco', type:'movie', search:'Sleeping Beauty 1959'},
   { title:'Rapunzel', type:'movie', search:'Tangled'},
 
   // MCU / Marvel + Spider-Man
@@ -707,7 +706,7 @@ const movies = [
   { title:'Guardiani della Galassia Vol. 2', type:'movie', search:'Guardians of the Galaxy Vol. 2'},
   { title:'Spider-Man: Homecoming', type:'movie'},
   { title:'Thor: Ragnarok', type:'movie'},
-  { title:'Black Panther', type:'movie'},
+  { title:'Black Panther', type:'movie', search:'Black Panther 2018'},
   { title:'Ant-Man and the Wasp', type:'movie'},
   { title:'Avengers: Infinity War', type:'movie'},
   { title:'Captain Marvel', type:'movie'},
@@ -715,9 +714,9 @@ const movies = [
   { title:'Spider-Man: Far From Home', type:'movie'},
   { title:'Deadpool e Wolverine', type:'movie'},
   { title:'Spider-Man: No Way Home', type:'movie'},
-  { title:'Spider-Man', type:'movie'},
-  { title:'Spider-Man 2', type:'movie'},
-  { title:'Spider-Man 3', type:'movie'},
+  { title:'Spider-Man', type:'movie', search:'Spider-Man 2002'},
+  { title:'Spider-Man 2', type:'movie', search:'Spider-Man 2 2004'},
+  { title:'Spider-Man 3', type:'movie', search:'Spider-Man 3 2007'},
 
   // SERIE TV
   { title:'La casa di carta', type:'tv', search:'Money Heist'},
@@ -1044,6 +1043,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
