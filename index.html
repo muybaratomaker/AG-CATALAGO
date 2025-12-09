@@ -840,7 +840,7 @@ async function addCardFor(m){
   try{
     let item = null;
 
-    // 1️⃣ SE C’È ID → PRENDI DIRETTAMENTE IL FILM CORRETTO
+    // 1️⃣ Se ha ID → recupero diretto senza ricerca
     if (m.id) {
       const typePath = m.type === 'movie' ? 'movie' : 'tv';
       const url = `${API_BASE}/${typePath}/${m.id}?api_key=${API_KEY}&language=it-IT`;
@@ -848,14 +848,12 @@ async function addCardFor(m){
       item = await res.json();
     }
 
-    // 2️⃣ ALTRIMENTI → FALLBACK ALLA RICERCA (IN INGLESE)
+    // 2️⃣ Altrimenti → ricerca TMDb in inglese
     else {
       const typePath = m.type === 'movie' ? 'movie' : 'tv';
       const query    = encodeURIComponent(m.search || m.title);
 
-      // 🟦 QUI LA RIGA IMPORTANTE: language = en-US
       const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=en-US&query=${query}&page=1`;
-
       const res      = await fetch(url);
       const data     = await res.json();
 
@@ -864,10 +862,11 @@ async function addCardFor(m){
       }
     }
 
+    // 3️⃣ Crea la card
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Se TMDb non restituisce nulla → messaggio
+    // Se non trovato
     if (!item || item.success === false) {
       card.dataset.categories = JSON.stringify([]);
       card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
@@ -875,7 +874,7 @@ async function addCardFor(m){
       return;
     }
 
-    // Poster + categorie
+    // 4️⃣ Poster, categorie, anno
     const poster   = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
     const genreIds = item.genres ? item.genres.map(g => g.id) : item.genre_ids || [];
 
@@ -1069,6 +1068,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
