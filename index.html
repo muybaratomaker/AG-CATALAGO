@@ -849,20 +849,49 @@ async function addCardFor(m){
       item = data.results[0];
     }
 
+async function addCardFor(m){
+  try{
+    let item = null;
+
+    // 1️⃣ SE C’È ID → PRENDI DIRETTAMENTE IL FILM CORRETTO
+    if (m.id) {
+      const typePath = m.type === 'movie' ? 'movie' : 'tv';
+      const url = `${API_BASE}/${typePath}/${m.id}?api_key=${API_KEY}&language=it-IT`;
+      const res = await fetch(url);
+      item = await res.json();
+    }
+
+    // 2️⃣ ALTRIMENTI → FALLBACK ALLA RICERCA (IN INGLESE)
+    else {
+      const typePath = m.type === 'movie' ? 'movie' : 'tv';
+      const query    = encodeURIComponent(m.search || m.title);
+
+      // 🟦 QUI LA RIGA IMPORTANTE: language = en-US
+      const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=en-US&query=${query}&page=1`;
+
+      const res      = await fetch(url);
+      const data     = await res.json();
+
+      if (data.results && data.results.length > 0) {
+        item = data.results[0];
+      }
+    }
+
     const card = document.createElement('div');
     card.className = 'card';
 
-    if (!item){
+    // Se TMDb non restituisce nulla → messaggio
+    if (!item || item.success === false) {
       card.dataset.categories = JSON.stringify([]);
       card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
       grid.appendChild(card);
       return;
     }
 
+    // Poster + categorie
     const poster   = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-    const genreIds = item.genre_ids || [];
+    const genreIds = item.genres ? item.genres.map(g => g.id) : item.genre_ids || [];
 
-    // mappo i generi TMDb nelle categorie custom
     const cats = [];
     CATEGORY_DEFS.forEach(def => {
       if (def.ids.some(id => genreIds.includes(id))) {
@@ -879,17 +908,18 @@ async function addCardFor(m){
       : (item.first_air_date? item.first_air_date.substring(0,4): '');
 
     card.innerHTML = `
-      ${poster ? `<img src="${item.poster_path ? 'https://image.tmdb.org/t/p/w500'+item.poster_path : ''}" alt="${item.title || item.name}">` : ''}
+      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
       <div class="title">${m.title}</div>
       <div class="meta">${year}</div>
     `;
+
     card.onclick = () => showDetails(item.id, m.type);
     grid.appendChild(card);
-  }catch(e){
+
+  } catch(e){
     console.error('Errore fetch card', e);
   }
 }
-
 /* BOTTONI CATEGORIA SEMPRE VISIBILI */
 function renderCategoryFilters(){
   filtersDiv.innerHTML = '';
@@ -1052,6 +1082,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
