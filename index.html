@@ -838,19 +838,6 @@ async function renderGrid(type){
 /* CREA CARD + associa categorie (catalogo) */
 async function addCardFor(m){
   try{
-    const typePath = m.type === 'movie' ? 'movie' : 'tv';
-    const query    = encodeURIComponent(m.search || m.title);
-    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=en-US&query=${query}&page=1`;
-    const res      = await fetch(url);
-    const data     = await res.json();
-
-    let item = null;
-    if (data.results && data.results.length > 0) {
-      item = data.results[0];
-    }
-
-async function addCardFor(m){
-  try{
     let item = null;
 
     // 1️⃣ SE C’È ID → PRENDI DIRETTAMENTE IL FILM CORRETTO
@@ -1082,6 +1069,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
