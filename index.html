@@ -790,19 +790,23 @@ const movies = [
   { title:'Beast Games', type:'tv' }
 
 ];
+let sheetLoaded = false;
 async function loadMoviesFromSheet() {
+
+  // Se il foglio è già stato caricato NON farlo di nuovo
+  if (sheetLoaded) return;
+  
   try {
     const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
     const res = await fetch(sheetUrl);
     const csv = await res.text();
 
     const rows = csv.trim().split("\n").map(r => r.split(","));
-
     const headers = rows.shift().map(h => h.trim().toLowerCase());
 
     const sheetMovies = rows.map(row => {
       const obj = {};
-      row.forEach((val, i) => { obj[headers[i]] = val.trim(); });
+      row.forEach((val, i) => (obj[headers[i]] = val.trim()));
 
       return {
         title: obj.title || "",
@@ -812,8 +816,9 @@ async function loadMoviesFromSheet() {
       };
     });
 
-    // 🔥 uniamo foglio + film del codice
     movies.push(...sheetMovies);
+
+    sheetLoaded = true;  // <-- 🔥 SIAMO A POSTO
 
   } catch (e) {
     console.error("Errore caricamento Google Sheet:", e);
@@ -851,9 +856,14 @@ async function renderGrid(type){
 
   grid.innerHTML = '';
 
-  const list = movies
-    .filter(m => m.type === type)
-    .sort((a,b) => a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
+const list = movies
+  .filter(m => {
+    if (type === "movie") return m.type === "movie";
+    if (type === "tv")    return m.type === "tv";
+    if (type === "todo")  return m.todo === "yes" || m.todo === "1" || m.todo === "true";
+    return false;
+  })
+  .sort((a,b) => a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
 
   for(const m of list){
     if (q && !m.title.toLowerCase().includes(q)) continue;
@@ -871,7 +881,7 @@ async function addCardFor(m){
 
     // 1️⃣ Se ha ID → recupero diretto senza ricerca
     if (m.id) {
-      const typePath = m.type === 'movie' ? 'movie' : 'tv';
+      const typePath = m.type === 'movie' || m.type === 'todo' ? 'movie' : 'tv'
       const url = `${API_BASE}/${typePath}/${m.id}?api_key=${API_KEY}&language=it-IT`;
       const res = await fetch(url);
       item = await res.json();
@@ -1097,6 +1107,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
