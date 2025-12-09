@@ -790,9 +790,34 @@ const movies = [
   { title:'Beast Games', type:'tv' }
 
 ];
-   // Disattivato Google Sheets per ora
 async function loadMoviesFromSheet() {
-  return; // non fa niente
+  try {
+    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
+    const res = await fetch(sheetUrl);
+    const csv = await res.text();
+
+    const rows = csv.trim().split("\n").map(r => r.split(","));
+
+    const headers = rows.shift().map(h => h.trim().toLowerCase());
+
+    const sheetMovies = rows.map(row => {
+      const obj = {};
+      row.forEach((val, i) => { obj[headers[i]] = val.trim(); });
+
+      return {
+        title: obj.title || "",
+        type: obj.type || "movie",
+        id: obj.id ? Number(obj.id) : null,
+        search: obj.search || ""
+      };
+    });
+
+    // 🔥 uniamo foglio + film del codice
+    movies.push(...sheetMovies);
+
+  } catch (e) {
+    console.error("Errore caricamento Google Sheet:", e);
+  }
 }
 /* Titoli da usare come anteprima nella home */
 const HOME_PREVIEW_TITLES = [
@@ -808,7 +833,7 @@ const HOME_PREVIEW_TITLES = [
 async function openCatalog(type){
   document.getElementById('home').style.display='none';
   document.getElementById('catalog').style.display='block';
-  //await loadMoviesFromSheet();
+  await loadMoviesFromSheet();
  catalogTitle.textContent =
     type === 'movie' ? 'Film' :
     type === 'tv'    ? 'Serie TV' :
@@ -1072,6 +1097,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
