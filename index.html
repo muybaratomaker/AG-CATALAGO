@@ -598,11 +598,11 @@ const movies = [
   // ============================
   // VARI
   // ============================
-  { title:'Hunger Games', type:'movie', search:'The Hunger Games' },
-  { title:'Hunger Games', type:'movie', search:'Hunger Games: La ragazza di fuoco' },
-  { title:'Hunger Games', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 1' },
-  { title:'Hunger Games', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 2' },
-  { title:'Hunger Games', type:'movie', search:'Hunger Games: La ballata dell usignolo e del serpente' },
+  { title:'The Hunger Games', type:'movie', search:'The Hunger Games' },
+  { title:'Hunger Games la ragazza di fuoco', type:'movie', search:'Hunger Games: La ragazza di fuoco' },
+  { title:'Hunger Games Il canto della rivolta - parte 1', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 1' },
+  { title:'Hunger Games il canto della rivolta - parte 2 ', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 2' },
+  { title:'Hunger Games La ballata dell usignolo e del serpente', type:'movie', search:'Hunger Games: La ballata dell usignolo e del serpente' },
   { title:'Pirati dei Caraibi 1', type:'movie', search:'Pirates of the Caribbean The Curse of the Black Pearl' },
   { title:'Pirati dei Caraibi 2', type:'movie', search:'Pirates of the Caribbean Dead Man\'s Chest' },
   { title:'Alice in Wonderland', type:'movie', search:'Alice in Wonderland 2010' },
@@ -647,7 +647,7 @@ const movies = [
   { title:'Game Night', type:'movie' },
   { title:'Split', type:'movie' },
   { title:'The Meg', type:'movie' },
-  { title:'Five Nights at Freddy’s', type:'movie', search:"Five Nights at Freddy's 2023" },
+  { title:'Five Nights at Freddy’s', type:'movie', search:"Five Nights at Freddy s (2023)" },
   { title:'Mamma ho perso l’aereo', type:'movie', search:'Home Alone 1990' },
   { title:'Mamma ho perso l’aereo 2', type:'movie', search:'Home Alone 2' },
   { title:'Knock Knock', type:'movie' },
@@ -840,7 +840,7 @@ async function addCardFor(m){
   try{
     const typePath = m.type === 'movie' ? 'movie' : 'tv';
     const query    = encodeURIComponent(m.search || m.title);
-    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=it-IT&query=${query}&page=1`;
+    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=en-US&query=${query}&page=1`;
     const res      = await fetch(url);
     const data     = await res.json();
 
@@ -1052,6 +1052,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
