@@ -812,7 +812,7 @@ async function loadMoviesFromSheet() {
         title: obj.title || "",
         type: obj.type || "movie",
         id: obj.id ? Number(obj.id) : null,
-        search: obj.search || ""
+        search: obj.search || "",
         todo:   (obj.todo || "").toLowerCase()
       };
     });
@@ -1118,6 +1118,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
