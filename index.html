@@ -813,6 +813,7 @@ async function loadMoviesFromSheet() {
         type: obj.type || "movie",
         id: obj.id ? Number(obj.id) : null,
         search: obj.search || ""
+        todo:   (obj.todo || "").toLowerCase()
       };
     });
 
@@ -858,9 +859,19 @@ async function renderGrid(type){
 
 const list = movies
   .filter(m => {
-    if (type === "movie") return m.type === "movie";
-    if (type === "tv")    return m.type === "tv";
-    if (type === "todo")  return m.todo === "yes" || m.todo === "1" || m.todo === "true";
+
+    // 🎬 Film normali → mostra SOLO quelli che NON sono "da vedere"
+    if (type === "movie") 
+      return m.type === "movie" && !(m.todo === "yes" || m.todo === "1" || m.todo === "true");
+
+    // 📺 Serie TV → invariato
+    if (type === "tv")    
+      return m.type === "tv";
+
+    // 🎯 Film da vedere → solo quelli marcati
+    if (type === "todo")  
+      return m.todo === "yes" || m.todo === "1" || m.todo === "true";
+
     return false;
   })
   .sort((a,b) => a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
@@ -1107,6 +1118,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
