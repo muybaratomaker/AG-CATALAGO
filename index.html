@@ -830,7 +830,14 @@ const movies = [
 
 ];
 let sheetLoaded = false;
-async function loadMoviesFromSheet() {
+function normalizeTitle(t){
+  return t
+    .replace(/’/g, "'")  // apostrofo curvo → apostrofo normale
+    .replace(/‘/g, "'")  // altro tipo di apostrofo curvo
+    .toLowerCase()
+    .trim();
+}
+  async function loadMoviesFromSheet() {
   sheetLoaded = false; // forziamo sempre reload
 
   try {
@@ -986,23 +993,25 @@ async function addCardFor(m){
       ? (item.release_date  ? item.release_date.substring(0,4)  : '')
       : (item.first_air_date? item.first_air_date.substring(0,4): '');
 
-  card.innerHTML = `
-  ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
-  <div class="title">${m.title}</div>
-  <div class="meta">${year}</div>
+    // 🔒 Titolo “sicuro” per l’onclick (escape degli apostrofi)
+    const safeTitle = (m.title || "").replace(/'/g, "\\'");
 
-${ADMIN_MODE ? `
-    <div style="margin-top:6px; display:flex; gap:6px;">
-      ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
-        <button onclick="event.stopPropagation(); adminMarkAsSeen('${m.title}')"
-                style="padding:4px 8px; font-size:12px;">Visto</button>
+    card.innerHTML = `
+      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
+      <div class="title">${m.title}</div>
+      <div class="meta">${year}</div>
+
+      ${ADMIN_MODE ? `
+        <div style="margin-top:6px; display:flex; gap:6px;">
+          ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
+           <button onclick="event.stopPropagation(); adminMarkAsSeen(normalizeTitle('${safeTitle}'))"
+                    style="padding:4px 8px; font-size:12px;">Visto</button>
+          ` : ""}
+          <button onclick="event.stopPropagation(); adminDeleteMovie(normalizeTitle('${safeTitle}'))"
+                  style="padding:4px 8px; font-size:12px; background:#b00020;">Elimina</button>
+        </div>
       ` : ""}
-      <button onclick="event.stopPropagation(); adminDeleteMovie('${m.title}')"
-              style="padding:4px 8px; font-size:12px; background:#b00020;">Elimina</button>
-    </div>
-` : ""}
-`;
-
+    `;
     card.onclick = () => showDetails(item.id, m.type);
     grid.appendChild(card);
 
@@ -1097,7 +1106,7 @@ function adminAddMovie(title, type = "movie") {
 
 function adminMarkAsSeen(title) {
   if (!ADMIN_MODE) return alert("Non sei admin.");
-  fetch(`${GS_BASE}?action=update&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&todo=no`)
+  fetch(`${GS_BASE}?action=update&key=${ADMIN_SECRET}&title=${encodeURIComponent(normalizeTitle(title))}&todo=no`)
     .then(r => r.text())
     .then(t => {
       alert("Aggiornato: " + t);
@@ -1111,7 +1120,7 @@ function adminMarkAsSeen(title) {
 }
 function adminDeleteMovie(title) {
   if (!ADMIN_MODE) return alert("Non sei admin.");
-  fetch(`${GS_BASE}?action=delete&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}`)
+  fetch(`${GS_BASE}?action=delete&key=${ADMIN_SECRET}&title=${encodeURIComponent(normalizeTitle(title))}`)
     .then(r => r.text())
     .then(t => {
       alert("Eliminato: " + t);
@@ -1266,6 +1275,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
