@@ -831,10 +831,8 @@ const movies = [
 ];
 let sheetLoaded = false;
 async function loadMoviesFromSheet() {
+  sheetLoaded = false; // forziamo sempre reload
 
-  // Se il foglio è già stato caricato NON farlo di nuovo
-  if (sheetLoaded) return;
-  
   try {
     const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
     const res = await fetch(sheetUrl);
@@ -846,7 +844,6 @@ async function loadMoviesFromSheet() {
     const sheetMovies = rows.map(row => {
       const obj = {};
       row.forEach((val, i) => (obj[headers[i]] = val.trim()));
-
       return {
         title: obj.title || "",
         type: obj.type || "movie",
@@ -856,9 +853,17 @@ async function loadMoviesFromSheet() {
       };
     });
 
-    movies.push(...sheetMovies);
+    // 🔥 Rimuovi prima tutti i film provenienti dal foglio
+    for (let i = movies.length - 1; i >= 0; i--) {
+      if (movies[i]._fromSheet) movies.splice(i, 1);
+    }
 
-    sheetLoaded = true;  // <-- 🔥 SIAMO A POSTO
+    // 🔥 Aggiungi i film freschi dal foglio
+    sheetMovies.forEach(s => {
+      movies.push({ ...s, _fromSheet: true });
+    });
+
+    sheetLoaded = true;
 
   } catch (e) {
     console.error("Errore caricamento Google Sheet:", e);
@@ -878,7 +883,6 @@ const HOME_PREVIEW_TITLES = [
 async function openCatalog(type){
   document.getElementById('home').style.display='none';
   document.getElementById('catalog').style.display='block';
-  await loadMoviesFromSheet();
  catalogTitle.textContent =
     type === 'movie' ? 'Film' :
     type === 'tv'    ? 'Serie TV' :
@@ -1239,7 +1243,7 @@ async function addHomeCardFor(m){
 
 /* AVVIO COMPLETO */
 (async () => {
-    //await loadMoviesFromSheet();   // prende i film dal foglio Google
+    await loadMoviesFromSheet();   // prende i film dal foglio Google
     await renderHomePreview();     // aggiorna la home
 })();
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
@@ -1254,6 +1258,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
