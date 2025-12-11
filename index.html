@@ -453,6 +453,17 @@
 
 <script>
 const API_KEY  = '9298687fa5e1f883f34db8ce4844c806';
+// --- Modalità Admin ---
+const urlParams = new URLSearchParams(window.location.search);
+const adminKey = urlParams.get("admin");
+
+// metti qui la tua secret
+const ADMIN_SECRET = "ag_secret_928374";
+
+// se true → sei in modalità admin
+const ADMIN_MODE = (adminKey === ADMIN_SECRET);
+
+console.log("Admin mode:", ADMIN_MODE);
 const API_BASE = 'https://api.themoviedb.org/3';
 
 /* Categorie manuali basate sui generi TMDb */
@@ -921,6 +932,11 @@ async function addCardFor(m){
       card.dataset.categories = JSON.stringify([]);
       card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
       grid.appendChild(card);
+      card.innerHTML += ADMIN_MODE ? `
+  <button onclick="adminAddMovie('${m.title}', '${m.type}')"
+    style="margin-top:8px; padding:4px 8px; font-size:12px;">
+    Aggiungi al catalogo
+  </button>` : "";
       return;
     }
 
@@ -943,11 +959,21 @@ async function addCardFor(m){
       ? (item.release_date  ? item.release_date.substring(0,4)  : '')
       : (item.first_air_date? item.first_air_date.substring(0,4): '');
 
-    card.innerHTML = `
-      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
-      <div class="title">${m.title}</div>
-      <div class="meta">${year}</div>
-    `;
+  card.innerHTML = `
+  ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
+  <div class="title">${m.title}</div>
+  <div class="meta">${year}</div>
+
+  ${ADMIN_MODE ? `
+    <div style="margin-top:6px; display:flex; gap:6px;">
+      <button onclick="event.stopPropagation(); adminMarkAsSeen('${m.title}')" 
+              style="padding:4px 8px; font-size:12px;">Visto</button>
+
+      <button onclick="event.stopPropagation(); adminDeleteMovie('${m.title}')"
+              style="padding:4px 8px; font-size:12px; background:#b00020;">Elimina</button>
+    </div>
+  ` : ""}
+`;
 
     card.onclick = () => showDetails(item.id, m.type);
     grid.appendChild(card);
@@ -1027,7 +1053,39 @@ async function showDetails(id, type){
 }
 
 function closeModal(){ modal.style.display='none'; }
+// --- Funzioni Admin → chiamano Google Script ---
 
+const GS_BASE = "https://script.google.com/macros/s/AKfycbymZUtlVPioO6WFtQOfZ_XLXqFO4b48vHIZ4ZXOZosBPFX6y9S8psozQ3LyUbFlz4Pc3w/exec";
+
+function adminAddMovie(title, type = "movie") {
+  if (!ADMIN_MODE) return alert("Non sei admin.");
+  fetch(`${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}&todo=yes`)
+    .then(r => r.text())
+    .then(t => {
+      alert("Aggiunto: " + t);
+      renderGrid(currentCatalogType);
+    });
+}
+
+function adminMarkAsSeen(title) {
+  if (!ADMIN_MODE) return alert("Non sei admin.");
+  fetch(`${GS_BASE}?action=update&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&todo=no`)
+    .then(r => r.text())
+    .then(t => {
+      alert("Aggiornato: " + t);
+      renderGrid(currentCatalogType);
+    });
+}
+
+function adminDeleteMovie(title) {
+  if (!ADMIN_MODE) return alert("Non sei admin.");
+  fetch(`${GS_BASE}?action=delete&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}`)
+    .then(r => r.text())
+    .then(t => {
+      alert("Eliminato: " + t);
+      renderGrid(currentCatalogType);
+    });
+}
 /* HOME / RESET / RICERCA */
 function tornaHome(){
   document.getElementById('catalog').style.display='none';
@@ -1094,6 +1152,11 @@ async function addHomeCardFor(m){
       <div class="title">${m.title}</div>
       <div class="meta">${m.type === 'movie' ? 'Film' : 'Serie TV'} ${year ? '· '+year : ''}</div>
     `;
+    card.innerHTML += ADMIN_MODE ? `
+  <button onclick="adminAddMovie('${m.title}', '${m.type}')"
+    style="margin-top:8px; padding:4px 8px; font-size:12px;">
+    Aggiungi al catalogo
+  </button>` : "";
     card.onclick = () => showDetails(item.id, m.type);
     homeGrid.appendChild(card);
   }catch(e){
@@ -1118,6 +1181,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
