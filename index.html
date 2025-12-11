@@ -357,6 +357,15 @@
     transform: scale(0.88);
     opacity: 0.85;
 }
+#catalog-footer {
+  margin-top: 40px;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ea7b3;
+  opacity: 0.8;
+}
+
 </style>
 </head>
 <body>
@@ -439,6 +448,7 @@
 
 </div>
     <div class="grid" id="grid"></div>
+    <div id="catalog-footer"></div>
   </div>
 </section>
 
@@ -933,6 +943,7 @@ const list = movies
 
   renderCategoryFilters();
   filterGrid();
+  updateCatalogFooter();
 }
 
 /* CREA CARD + associa categorie (catalogo) */
@@ -1257,6 +1268,23 @@ async function addHomeCardFor(m){
     console.error('Errore anteprima home', e);
   }
 }
+  function updateCatalogFooter() {
+  const filmCount = movies.filter(
+    m => m.type === "movie" && !(m.todo === "yes" || m.todo === "1" || m.todo === "true")
+  ).length;
+
+  const tvCount = movies.filter(
+    m => m.type === "tv"
+  ).length;
+
+  const todoCount = movies.filter(
+    m => m.todo === "yes" || m.todo === "1" || m.todo === "true"
+  ).length;
+
+  document.getElementById("catalog-footer").textContent =
+    `Film totali: ${filmCount} — Serie TV: ${tvCount} — Da vedere: ${todoCount}`;
+}
+
 
 /* AVVIO COMPLETO */
 (async () => {
@@ -1275,6 +1303,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
