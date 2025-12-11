@@ -1103,9 +1103,10 @@ function adminMarkAsSeen(title) {
       alert("Aggiornato: " + t);
 
       sheetLoaded = false;               // ricarica foglio
-      loadMoviesFromSheet().then(() => { 
-        renderGrid(currentCatalogType);  // aggiorna catalogo
-      });
+     loadMoviesFromSheet().then(() => {
+  grid.innerHTML = "";   // 🔥 SVUOTA LA GRIGLIA
+  renderGrid(currentCatalogType);
+    });
     });
 }
 function adminDeleteMovie(title) {
@@ -1114,7 +1115,12 @@ function adminDeleteMovie(title) {
     .then(r => r.text())
     .then(t => {
       alert("Eliminato: " + t);
-      renderGrid(currentCatalogType);
+
+      sheetLoaded = false;
+      loadMoviesFromSheet().then(() => {
+        grid.innerHTML = "";
+        renderGrid(currentCatalogType);
+      });
     });
 }
 function adminAddNewMovie() {
@@ -1132,6 +1138,7 @@ function adminAddNewMovie() {
       sheetLoaded = false;
 
       loadMoviesFromSheet().then(() => {
+        grid.innerHTML = "";
         renderGrid(currentCatalogType);
       });
     });
@@ -1164,6 +1171,7 @@ function submitAddForm(){
       sheetLoaded = false;
 
       loadMoviesFromSheet().then(() => {
+        grid.innerHTML = "";
         if (currentCatalogType) renderGrid(currentCatalogType);
       });
     });
@@ -1258,6 +1266,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
