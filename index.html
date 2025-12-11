@@ -435,7 +435,6 @@
     </div>
 
 </div>
-
     <div class="grid" id="grid"></div>
   </div>
 </section>
@@ -481,6 +480,35 @@ let currentCatalogType = null;
 
 const filtersDiv   = document.getElementById('filters');
 const grid         = document.getElementById('grid');
+// --- Barra Admin dinamica --- 
+// --- Barra Admin dinamica --- 
+window.addEventListener("DOMContentLoaded", () => {
+  if (!ADMIN_MODE) return;
+
+  const controls = document.querySelector(".controls");
+  if (!controls) return; // sicurezza
+
+  const div = document.createElement("div");
+  div.style.marginBottom = "20px";
+  div.style.padding = "10px";
+  div.style.background = "#1118";
+  div.style.borderRadius = "8px";
+
+  div.innerHTML = `
+      <input id="adminAddInput" placeholder="Titolo del film..." 
+             style="padding:6px 10px; border-radius:6px; width:200px;">
+      <select id="adminAddType" style="padding:6px 10px; border-radius:6px;">
+        <option value="movie">Film</option>
+        <option value="tv">Serie TV</option>
+      </select>
+      <button onclick="adminAddNewMovie()" 
+              style="padding:6px 12px; margin-left:6px; border-radius:6px; cursor:pointer;">
+        Aggiungi
+      </button>
+  `;
+
+  controls.insertAdjacentElement("afterend", div);
+});
 const searchInput  = document.getElementById('searchInput');
 const modal        = document.getElementById('modal');
 const modalTitle   = document.getElementById('modalTitle');
@@ -964,15 +992,16 @@ async function addCardFor(m){
   <div class="title">${m.title}</div>
   <div class="meta">${year}</div>
 
-  ${ADMIN_MODE ? `
+${ADMIN_MODE ? `
     <div style="margin-top:6px; display:flex; gap:6px;">
-      <button onclick="event.stopPropagation(); adminMarkAsSeen('${m.title}')" 
-              style="padding:4px 8px; font-size:12px;">Visto</button>
-
+      ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
+        <button onclick="event.stopPropagation(); adminMarkAsSeen('${m.title}')"
+                style="padding:4px 8px; font-size:12px;">Visto</button>
+      ` : ""}
       <button onclick="event.stopPropagation(); adminDeleteMovie('${m.title}')"
               style="padding:4px 8px; font-size:12px; background:#b00020;">Elimina</button>
     </div>
-  ` : ""}
+` : ""}
 `;
 
     card.onclick = () => showDetails(item.id, m.type);
@@ -1073,10 +1102,13 @@ function adminMarkAsSeen(title) {
     .then(r => r.text())
     .then(t => {
       alert("Aggiornato: " + t);
-      renderGrid(currentCatalogType);
+
+      sheetLoaded = false;               // ricarica foglio
+      loadMoviesFromSheet().then(() => { 
+        renderGrid(currentCatalogType);  // aggiorna catalogo
+      });
     });
 }
-
 function adminDeleteMovie(title) {
   if (!ADMIN_MODE) return alert("Non sei admin.");
   fetch(`${GS_BASE}?action=delete&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}`)
@@ -1086,6 +1118,26 @@ function adminDeleteMovie(title) {
       renderGrid(currentCatalogType);
     });
 }
+function adminAddNewMovie() {
+  const title = document.getElementById("adminAddInput").value.trim();
+  const type  = document.getElementById("adminAddType").value;
+
+  if (!title) return alert("Inserisci un titolo.");
+
+  fetch(`${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}`)
+    .then(r => r.text())
+    .then(t => {
+      alert("Aggiunto: " + t);
+
+      // forza refresh dei dati
+      sheetLoaded = false;
+
+      loadMoviesFromSheet().then(() => {
+        renderGrid(currentCatalogType);
+      });
+    });
+}
+
 /* HOME / RESET / RICERCA */
 function tornaHome(){
   document.getElementById('catalog').style.display='none';
@@ -1181,6 +1233,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
