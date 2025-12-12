@@ -472,8 +472,13 @@
 
 .hero-center{
   text-align:center;
-  margin-bottom:45px;
+  margin-bottom:30px;
+  margin-top:-40px;   /* ⬅️ titolo più in alto */
 }
+  .hero-center .buttons{
+  justify-content:center;
+}
+
 
 .hero-center h1{
   font-size:46px;
@@ -503,18 +508,18 @@
   display:flex;
   gap:14px;
   padding:6px;
+
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none;/* vecchio Edge/IE */
 }
 
-.hero-row::-webkit-scrollbar{ height:6px; }
-.hero-row::-webkit-scrollbar-thumb{
-  background:rgba(255,255,255,0.25);
-  border-radius:6px;
+.hero-row::-webkit-scrollbar{
+  display: none;           /* Chrome/Safari */
 }
-
 /* card piccole nella preview */
 .hero-row .home-card{
-  min-width:130px;
-  max-width:130px;
+  min-width:170px;
+  max-width:170px;
   flex:0 0 auto;
 }
 
@@ -1396,7 +1401,7 @@ async function renderHeroRow(){
   const picks = movies
     .filter(m => m.type === "movie")
     .sort(() => 0.5 - Math.random())
-    .slice(0, 18);
+    .slice(0, 12);
 
   for(const m of picks){
     await addHomeCardFor(m, row);
@@ -1487,11 +1492,45 @@ async function renderHeroGrid(){
 
   await Promise.all(promises);
 }
+  function autoScrollHeroRow(){
+  const row = document.getElementById("heroRow");
+  if(!row) return;
+
+  // 🔁 duplica le card
+  row.innerHTML += row.innerHTML;
+
+  let speed = 0.4;
+  let paused = false;
+
+  function step(){
+    if(!paused){
+      row.scrollLeft += speed;
+
+      // loop infinito pulito
+      if(row.scrollLeft >= row.scrollWidth / 2){
+        row.scrollLeft = 0;
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  row.addEventListener("mouseenter", () => paused = true);
+  row.addEventListener("mouseleave", () => paused = false);
+
+  // mobile
+  row.addEventListener("touchstart", () => paused = true);
+  row.addEventListener("touchend", () => paused = false);
+
+  step();
+}
+
+
 /* AVVIO COMPLETO */
 (async () => {
   await loadMoviesFromSheet();
   await renderHeroGrid();  
-  await renderHeroRow();      // 👈 aggiungi questa
+  await renderHeroRow();
+  autoScrollHeroRow();
 })();
 
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
@@ -1506,6 +1545,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
