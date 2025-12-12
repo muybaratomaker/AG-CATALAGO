@@ -500,22 +500,39 @@
 }
 
 .hero-preview{
-  overflow-x:auto;
+  overflow-x: auto;
   padding-bottom:12px;
+
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* Edge legacy */
+
+  /* fade laterale */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+}
+
+.hero-preview::-webkit-scrollbar{
+  display: none;                /* Chrome / Safari */
 }
 
 .hero-row{
   display:flex;
   gap:14px;
   padding:6px;
-
-  scrollbar-width: none;   /* Firefox */
-  -ms-overflow-style: none;/* vecchio Edge/IE */
 }
 
-.hero-row::-webkit-scrollbar{
-  display: none;           /* Chrome/Safari */
-}
 /* card piccole nella preview */
 .hero-row .home-card{
   min-width:170px;
@@ -1492,21 +1509,24 @@ async function renderHeroGrid(){
 
   await Promise.all(promises);
 }
-  function autoScrollHeroRow(){
+ function autoScrollHeroRow(){
   const row = document.getElementById("heroRow");
   if(!row) return;
 
-  // 🔁 duplica le card
+  // evita doppie inizializzazioni
+  if(row.dataset.scrolling === "true") return;
+  row.dataset.scrolling = "true";
+
+  // duplica UNA SOLA VOLTA
   row.innerHTML += row.innerHTML;
 
-  let speed = 0.4;
+  let speed = 0.35;
   let paused = false;
 
   function step(){
     if(!paused){
       row.scrollLeft += speed;
 
-      // loop infinito pulito
       if(row.scrollLeft >= row.scrollWidth / 2){
         row.scrollLeft = 0;
       }
@@ -1516,15 +1536,11 @@ async function renderHeroGrid(){
 
   row.addEventListener("mouseenter", () => paused = true);
   row.addEventListener("mouseleave", () => paused = false);
-
-  // mobile
   row.addEventListener("touchstart", () => paused = true);
   row.addEventListener("touchend", () => paused = false);
 
   step();
 }
-
-
 /* AVVIO COMPLETO */
 (async () => {
   await loadMoviesFromSheet();
@@ -1545,6 +1561,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
