@@ -34,6 +34,7 @@
   inset:0;
   overflow:hidden;
   z-index:0;
+  background:#05060a;
 }
 
 .hero-grid{
@@ -43,19 +44,18 @@
   width:140%;
   height:140%;
   display:grid;
-  grid-template-columns:repeat(8, 1fr);
-  gap:18px;
+  grid-template-columns:repeat(12, 1fr);
+  gap:12px;    
   transform:rotate(-12deg);
   opacity:0.35;
 }
 
 .hero-grid img{
   width:100%;
-  border-radius:10px;
+  border-radius:8px;
   object-fit:cover;
-  filter:brightness(0.85);
+  filter:brightness(0.8);
 }
-
 /* Overlay scuro + vignetta */
 .hero-overlay{
   position:absolute;
@@ -1416,14 +1416,15 @@ async function addHomeCardFor(m){
 async function renderHeroGrid(){
   const heroGrid = document.getElementById("heroGrid");
   if(!heroGrid) return;
+
   heroGrid.innerHTML = "";
-  // prendiamo un po' di film casuali
+
   const picks = movies
     .filter(m => m.type === "movie")
     .sort(() => 0.5 - Math.random())
-    .slice(0, 40);
+    .slice(0, 90);
 
-  for(const m of picks){
+  const promises = picks.map(async m => {
     try{
       const query = encodeURIComponent(m.search || m.title);
       const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
@@ -1432,11 +1433,15 @@ async function renderHeroGrid(){
 
       if(data.results && data.results[0]?.poster_path){
         const img = document.createElement("img");
+        img.loading = "lazy";
+        img.decoding = "async";
         img.src = `https://image.tmdb.org/t/p/w342${data.results[0].poster_path}`;
         heroGrid.appendChild(img);
       }
     }catch(e){}
-  }
+  });
+
+  await Promise.all(promises);
 }
 /* AVVIO COMPLETO */
 (async () => {
@@ -1456,6 +1461,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
