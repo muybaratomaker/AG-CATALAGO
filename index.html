@@ -46,22 +46,23 @@
   display:grid;
   grid-template-columns:repeat(12, 1fr);
   gap:12px;    
-  transform:rotate(-12deg);
-  opacity:0.35;
+  transform:rotate(-7deg);
+  opacity:0.55;
 }
 
 .hero-grid img{
+  box-shadow:0 6px 18px rgba(0,0,0,0.45);
   width:100%;
   border-radius:8px;
   object-fit:cover;
-  filter:brightness(0.8);
+  filter:brightness(1);
 }
 /* Overlay scuro + vignetta */
 .hero-overlay{
   position:absolute;
   inset:0;
   background:
-    radial-gradient(circle at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.85) 70%),
+  radial-gradient(circle at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 65%),
     linear-gradient(to bottom, rgba(0,0,0,0.6), #05060a);
 }
   /* HOME */
@@ -1461,6 +1462,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
