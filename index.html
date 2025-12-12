@@ -197,32 +197,31 @@
 }
 
 /* Logo mini AG */
-.logo-mini{
-  width:36px;
-  height:36px;
-  border-radius:12px;
-  border:none;
-  padding:0;
-  margin:0;
-  background:linear-gradient(135deg,#42a5f5,#7e57c2,#26a69a);
-  color:#fff;
-  font-weight:700;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  flex-shrink:0;
-  box-shadow:0 4px 14px rgba(0,0,0,0.5);
-  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+.logo-mini {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.logo-mini:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 18px rgba(0,0,0,0.8);
-  filter:brightness(1.05);
+.logo-mini img {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+  transition: transform .15s, box-shadow .15s;
 }
 
+.logo-mini img:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.7);
+}
 /* Categorie: pillole distanziate */
 .filters{
   display:flex;
@@ -439,8 +438,9 @@
 <div class="controls">
 
     <!-- Logo AG mini = torna alla home -->
-    <button class="logo-mini" onclick="tornaHome()">AG</button>
-
+<button class="logo-mini" onclick="tornaHome()" aria-label="Torna alla home">
+  <img src="favicon.png" alt="Home" />
+</button>
     <!-- Categorie -->
     <div class="filters" id="filters"></div>
 
@@ -1306,6 +1306,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
