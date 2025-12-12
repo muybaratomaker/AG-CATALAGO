@@ -28,9 +28,45 @@
       radial-gradient(circle at 50% 50%, #1a237e11 0, #000 70%);
     z-index:-1;
   }
+/* HERO NETFLIX STYLE */
+.hero-bg{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  z-index:0;
+}
 
+.hero-grid{
+  position:absolute;
+  top:-20%;
+  left:-20%;
+  width:140%;
+  height:140%;
+  display:grid;
+  grid-template-columns:repeat(8, 1fr);
+  gap:18px;
+  transform:rotate(-12deg);
+  opacity:0.35;
+}
+
+.hero-grid img{
+  width:100%;
+  border-radius:10px;
+  object-fit:cover;
+  filter:brightness(0.85);
+}
+
+/* Overlay scuro + vignetta */
+.hero-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.85) 70%),
+    linear-gradient(to bottom, rgba(0,0,0,0.6), #05060a);
+}
   /* HOME */
   #home{
+    position: relative;
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -44,6 +80,8 @@
     grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr);
     gap:40px;
     align-items:center;
+    position:relative;
+    z-index:2;
   }
   @media(max-width:900px){
     .home-inner{
@@ -422,6 +460,11 @@
 
 <!-- HOME -->
 <section id="home">
+  <!-- HERO BACKGROUND -->
+<div class="hero-bg">
+  <div class="hero-grid" id="heroGrid"></div>
+  <div class="hero-overlay"></div>
+</div>
   <div class="home-inner">
     <!-- Colonna sinistra: logo + testo + pulsanti -->
     <div class="home-hero">
@@ -1370,12 +1413,36 @@ async function addHomeCardFor(m){
   document.getElementById("catalog-footer").textContent =
     `Film totali: ${filmCount} — Serie TV: ${tvCount} — Da vedere: ${todoCount}`;
 }
+async function renderHeroGrid(){
+  const heroGrid = document.getElementById("heroGrid");
+  if(!heroGrid) return;
+  heroGrid.innerHTML = "";
+  // prendiamo un po' di film casuali
+  const picks = movies
+    .filter(m => m.type === "movie")
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 40);
 
+  for(const m of picks){
+    try{
+      const query = encodeURIComponent(m.search || m.title);
+      const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
+      if(data.results && data.results[0]?.poster_path){
+        const img = document.createElement("img");
+        img.src = `https://image.tmdb.org/t/p/w342${data.results[0].poster_path}`;
+        heroGrid.appendChild(img);
+      }
+    }catch(e){}
+  }
+}
 /* AVVIO COMPLETO */
 (async () => {
-    await loadMoviesFromSheet();   // prende i film dal foglio Google
-    await renderHomePreview();     // aggiorna la home
+  await loadMoviesFromSheet(); // prende i film dal foglio Google
+  await renderHeroGrid();  
+  await renderHomePreview();     // aggiorna la home
 })();
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
 window.addEventListener("scroll", () => {
@@ -1389,6 +1456,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
