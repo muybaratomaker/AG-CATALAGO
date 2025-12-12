@@ -222,6 +222,9 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.7);
 }
+.logo-mini:active {
+  transform: scale(0.92);
+}
 /* Categorie: pillole distanziate */
 .filters{
   display:flex;
@@ -359,6 +362,29 @@
     transform: scale(0.88);
     opacity: 0.85;
 }
+.home-icon{
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display:block;
+}
+
+/* animazioni */
+.fade-out {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .35s ease, transform .35s ease;
+}
+
+/* mobile più “corto” */
+@media (max-width: 600px){
+  .fade-out{ transform: translateY(10px); }
+}
 #catalog-footer {
   margin-top: 40px;
   padding: 12px;
@@ -438,7 +464,7 @@
 <div class="controls">
 
     <!-- Logo AG mini = torna alla home -->
-<button class="logo-mini" onclick="tornaHome()" aria-label="Torna alla home">
+<button class="logo-mini" onclick="tornaHomeAnimated()" aria-label="Torna alla home">
   <img src="favicon.png" alt="Home" />
 </button>
     <!-- Categorie -->
@@ -901,16 +927,33 @@ const HOME_PREVIEW_TITLES = [
 
 /* HOME -> CATALOGO */
 async function openCatalog(type){
-  document.getElementById('home').style.display='none';
-  document.getElementById('catalog').style.display='block';
- catalogTitle.textContent =
-    type === 'movie' ? 'Film' :
-    type === 'tv'    ? 'Serie TV' :
-    type === 'todo'  ? 'Film da vedere' :
-                       'Catalogo';
-  currentCatalogType = type;
-  activeCategory     = null;
-  await renderGrid(type);
+  const home = document.getElementById('home');
+  const catalog = document.getElementById('catalog');
+
+  // anima uscita home
+  home.classList.add('fade-out');
+
+  setTimeout(async () => {
+    home.style.display = 'none';
+    home.classList.remove('fade-out');
+
+    catalog.style.display = 'block';
+    catalog.classList.add('fade-in');
+
+    setTimeout(() => catalog.classList.remove('fade-in'), 400);
+
+    catalogTitle.textContent =
+      type === 'movie' ? 'Film' :
+      type === 'tv'    ? 'Serie TV' :
+      type === 'todo'  ? 'Film da vedere' :
+                         'Catalogo';
+
+    currentCatalogType = type;
+    activeCategory     = null;
+    await renderGrid(type);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 350);
 }
 
 /* RENDER GRID (ordinata alfabeticamente) */
@@ -1200,14 +1243,34 @@ function submitAddForm(){
     });
 }
 /* HOME / RESET / RICERCA */
-function tornaHome(){
-  document.getElementById('catalog').style.display='none';
-  document.getElementById('home').style.display='flex';
-  searchInput.value = '';
-  activeCategory    = null;
-  currentCatalogType= null;
-}
+function tornaHomeAnimated(){
+  const home = document.getElementById('home');
+  const catalog = document.getElementById('catalog');
 
+  // 1) anima uscita catalogo
+  catalog.classList.add('fade-out');
+
+  // 2) dopo la transizione, switch e anima entrata home
+  setTimeout(() => {
+    catalog.style.display = 'none';
+    catalog.classList.remove('fade-out');
+
+    home.style.display = 'flex';
+    home.classList.add('fade-in');
+
+    // pulizia classi dopo animazione
+    setTimeout(() => home.classList.remove('fade-in'), 400);
+
+    // reset variabili come facevi prima
+    searchInput.value = '';
+    activeCategory = null;
+    currentCatalogType = null;
+
+    // torna in alto (utile su mobile)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  }, 350);
+}
 /* Reset filtri nel catalogo */
 function resetFilters(){
   searchInput.value = '';
@@ -1306,6 +1369,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
