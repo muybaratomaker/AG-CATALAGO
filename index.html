@@ -461,6 +461,62 @@
   color: #9ea7b3;
   opacity: 0.8;
 }
+.hero-content{
+  position:relative;
+  z-index:2;
+  width:100%;
+  max-width:1200px;
+  margin:0 auto;
+  padding:70px 20px 40px;
+}
+
+.hero-center{
+  text-align:center;
+  margin-bottom:45px;
+}
+
+.hero-center h1{
+  font-size:46px;
+  margin:0 0 10px;
+  text-shadow:0 6px 30px rgba(0,0,0,0.85);
+}
+
+.hero-sub{
+  font-size:16px;
+  color:#d0d7de;
+  margin:0 0 24px;
+}
+
+/* PREVIEW ORIZZONTALE */
+.hero-preview h3{
+  margin:0 0 14px 6px;
+  font-size:18px;
+  color:#e0e0e0;
+}
+
+.hero-preview{
+  overflow-x:auto;
+  padding-bottom:12px;
+}
+
+.hero-row{
+  display:flex;
+  gap:14px;
+  padding:6px;
+}
+
+.hero-row::-webkit-scrollbar{ height:6px; }
+.hero-row::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.25);
+  border-radius:6px;
+}
+
+/* card piccole nella preview */
+.hero-row .home-card{
+  min-width:130px;
+  max-width:130px;
+  flex:0 0 auto;
+}
 
 </style>
 </head>
@@ -474,58 +530,34 @@
   <div class="hero-grid" id="heroGrid"></div>
   <div class="hero-overlay"></div>
 </div>
-  <div class="home-inner">
-    <!-- Colonna sinistra: logo + testo + pulsanti -->
-    <div class="home-hero">
-      <div class="logo-wrap">
-        <!-- LOGO AG in SVG -->
-        <svg class="logo-ag" viewBox="0 0 150 60" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="agGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#42a5f5"/>
-              <stop offset="50%" stop-color="#7e57c2"/>
-              <stop offset="100%" stop-color="#26a69a"/>
-            </linearGradient>
-          </defs>
-          <rect x="4" y="4" rx="14" ry="14" width="142" height="52"
-                fill="url(#agGrad)" opacity="0.96"/>
-          <rect x="7" y="7" rx="12" ry="12" width="136" height="46"
-                fill="rgba(0,0,0,0.35)"/>
-          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-                fill="#ffffff" font-size="30" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-                font-weight="700" letter-spacing="2">
-            AG
-          </text>
-        </svg>
-      </div>
+<div class="hero-content">
 
-      <h1>Catalogo AG</h1>
-      <p class="home-subtitle">La nostra collezione di film e serie visti dal 2020.</p>
-      <p class="home-text">
-        Scegli se esplorare solo i <strong>film</strong> oppure le <strong>serie TV</strong>.<br>
-        Nelle pagine del catalogo puoi filtrare per genere (commedia, azione, horror, ecc.),
-        cercare per titolo e aprire ogni scheda per vedere <em>trama</em> e <em>cast</em>.
-      </p>
+  <!-- BLOCCO CENTRALE -->
+  <div class="hero-center">
+    <h1>Catalogo AG</h1>
+    <p class="hero-sub">
+      La nostra collezione di film e serie visti dal 2020
+    </p>
+
     <div class="buttons">
-    <button class="btn" onclick="openCatalog('movie')">Vai ai Film</button>
-    <button class="btn" onclick="openCatalog('tv')">Vai alle Serie TV</button>
-    <button class="btn" onclick="openCatalog('todo')">Film da vedere</button>
-     <button class="btn" id="adminAddBtn" style="display:none;" onclick="openAddForm()">
-  + Aggiungi
-</button>
-</div>
-    </div>
+      <button class="btn" onclick="openCatalog('movie')">Film</button>
+      <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
+      <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
 
-    <!-- Colonna destra: anteprima titoli -->
-    <div class="home-preview">
-      <h2 class="home-preview-title">Qualche titolo dalla collezione</h2>
-      <p class="home-preview-sub">
-        Un assaggio veloce di film e serie che abbiamo già visto. Clicca per aprire
-        la scheda con trama e cast.
-      </p>
-      <div class="home-grid" id="homeGrid"></div>
+      <button class="btn" id="adminAddBtn" style="display:none;" onclick="openAddForm()">
+        + Aggiungi
+      </button>
     </div>
   </div>
+
+  <!-- PREVIEW ORIZZONTALE -->
+  <div class="hero-preview">
+    <h3>Qualche titolo dalla collezione</h3>
+    <div class="hero-row" id="heroRow"></div>
+  </div>
+
+</div>
+
 </section>
 
 <!-- CATALOGO -->
@@ -1356,19 +1388,22 @@ searchInput.addEventListener('input', () => {
 });
 
 /* ----------------- ANTEPRIMA HOME ------------------- */
-async function renderHomePreview(){
-  if (!homeGrid) return;
-  homeGrid.innerHTML = '';
+async function renderHeroRow(){
+  const row = document.getElementById("heroRow");
+  if(!row) return;
+  row.innerHTML = "";
 
-  const chosen = movies.filter(m => HOME_PREVIEW_TITLES.includes(m.title));
+  const picks = movies
+    .filter(m => m.type === "movie")
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 18);
 
-  for (const m of chosen){
-    await addHomeCardFor(m);
+  for(const m of picks){
+    await addHomeCardFor(m, row);
   }
 }
-
 /* Card per la home (usa stessa API, ma griglia diversa) */
-async function addHomeCardFor(m){
+async function addHomeCardFor(m, container = homeGrid){
   try{
     const typePath = m.type === 'movie' ? 'movie' : 'tv';
     const query    = encodeURIComponent(m.search || m.title);
@@ -1386,7 +1421,7 @@ async function addHomeCardFor(m){
 
     if (!item){
       card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
-      homeGrid.appendChild(card);
+      container.appendChild(card);
       return;
     }
 
@@ -1401,7 +1436,7 @@ async function addHomeCardFor(m){
       <div class="meta">${m.type === 'movie' ? 'Film' : 'Serie TV'} ${year ? '· '+year : ''}</div>
     `;
     card.onclick = () => showDetails(item.id, m.type);
-    homeGrid.appendChild(card);
+    container.appendChild(card);
   }catch(e){
     console.error('Errore anteprima home', e);
   }
@@ -1431,7 +1466,7 @@ async function renderHeroGrid(){
   const picks = movies
     .filter(m => m.type === "movie")
     .sort(() => 0.5 - Math.random())
-    .slice(0, 90);
+    .slice(0, 70);
 
   const promises = picks.map(async m => {
     try{
@@ -1454,10 +1489,11 @@ async function renderHeroGrid(){
 }
 /* AVVIO COMPLETO */
 (async () => {
-  await loadMoviesFromSheet(); // prende i film dal foglio Google
+  await loadMoviesFromSheet();
   await renderHeroGrid();  
-  await renderHomePreview();     // aggiorna la home
+  await renderHeroRow();      // 👈 aggiungi questa
 })();
+
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
 window.addEventListener("scroll", () => {
     const bar = document.querySelector(".controls");
@@ -1470,6 +1506,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
