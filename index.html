@@ -533,15 +533,32 @@
   font-size:18px;
   color:#e0e0e0;
 }
-
 .hero-preview{
-  overflow: hidden;   /* ⬅️ chiave: niente scrollbar */
-  padding: 12px 48px; /* spazio per le frecce */
+  overflow:hidden;
 }
-  .hero-slider{
+
+.hero-slider{
   position:relative;
-  padding: 0 48px; /* spazio frecce */
+  padding:0 48px;
 }
+
+.hero-track{
+  overflow-x: scroll;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  scroll-behavior: smooth; 
+}
+
+.hero-track::-webkit-scrollbar{
+  display:none;
+}
+
+.hero-track:active{
+  cursor: grabbing;
+}
+
 .hero-preview::-webkit-scrollbar{
   display: none;                /* Chrome / Safari */
 }
@@ -598,9 +615,13 @@
   <div class="hero-slider">
     <button class="hero-arrow left">&#10094;</button>
     <button class="hero-arrow right">&#10095;</button>
-    <div class="hero-row" id="heroRow"></div>
+
+    <div class="hero-track" id="heroTrack">
+      <div class="hero-row" id="heroRow"></div>
+    </div>
   </div>
 </div>
+
 </section>
 
 <!-- CATALOGO -->
@@ -1531,15 +1552,15 @@ async function renderHeroGrid(){
   await Promise.all(promises);
 }
 function autoScrollHeroRow(){
-  const row = document.getElementById("heroRow");
-  const preview = row.parentElement;
-  const leftBtn  = preview.querySelector(".hero-arrow.left");
-  const rightBtn = preview.querySelector(".hero-arrow.right");
+  const track = document.getElementById("heroTrack");
+  const row   = document.getElementById("heroRow");
+  const left  = document.querySelector(".hero-arrow.left");
+  const right = document.querySelector(".hero-arrow.right");
 
-  if(!row || row.dataset.scrolling) return;
-  row.dataset.scrolling = "true";
+  if(track.dataset.scrolling) return;
+  track.dataset.scrolling = "true";
 
-  // duplica per loop infinito
+  // duplica contenuto per loop infinito
   row.innerHTML += row.innerHTML;
 
   let speed = 0.35;
@@ -1547,23 +1568,46 @@ function autoScrollHeroRow(){
 
   function step(){
     if(!paused){
-      row.scrollLeft += speed;
-      if(row.scrollLeft >= row.scrollWidth / 2){
-        row.scrollLeft = 0;
+      track.scrollLeft += speed;
+      if(track.scrollLeft >= track.scrollWidth / 2){
+        track.scrollLeft = 0;
       }
     }
     requestAnimationFrame(step);
   }
 
-  // hover pausa
-  preview.addEventListener("mouseenter", () => paused = true);
-  preview.addEventListener("mouseleave", () => paused = false);
+  // hover = pausa
+  track.addEventListener("mouseenter", () => paused = true);
+  track.addEventListener("mouseleave", () => paused = false);
 
   // frecce
-  leftBtn.onclick = () => row.scrollLeft -= 300;
-  rightBtn.onclick = () => row.scrollLeft += 300;
+  left.onclick  = () => track.scrollLeft -= 320;
+  right.onclick = () => track.scrollLeft += 320;
 
   step();
+}
+  function enableDragScroll(){
+  const track = document.getElementById("heroTrack");
+
+  let isDown = false;
+  let startX;
+  let scrollStart;
+
+  track.addEventListener("mousedown", e => {
+    isDown = true;
+    startX = e.pageX;
+    scrollStart = track.scrollLeft;
+  });
+
+  window.addEventListener("mouseup", () => isDown = false);
+
+  track.addEventListener("mousemove", e => {
+    if(!isDown) return;
+    e.preventDefault();
+    const x = e.pageX;
+    const walk = (x - startX) * 1.3;
+    track.scrollLeft = scrollStart - walk;
+  });
 }
 /* AVVIO COMPLETO */
 (async () => {
@@ -1571,6 +1615,7 @@ function autoScrollHeroRow(){
   await renderHeroGrid();  
   await renderHeroRow();
   autoScrollHeroRow();
+  enableDragScroll();
 })();
 
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
@@ -1585,6 +1630,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
