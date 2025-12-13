@@ -73,6 +73,41 @@
       rgba(5,6,10,0.55)
     );
 }
+  .hero-arrow{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:5;
+
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:none;
+
+  background:rgba(0,0,0,0.55);
+  color:white;
+  font-size:22px;
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  opacity:0;
+  transition:opacity .25s ease, transform .25s ease;
+}
+
+.hero-preview:hover .hero-arrow{
+  opacity:1;
+}
+
+.hero-arrow:hover{
+  transform:translateY(-50%) scale(1.12);
+}
+
+.hero-arrow.left{ left:6px; }
+.hero-arrow.right{ right:6px; }
+
   /* HOME */
   #home{
     position: relative;
@@ -500,29 +535,13 @@
 }
 
 .hero-preview{
-  overflow-x: auto;
-  padding-bottom:12px;
-
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* Edge legacy */
-
-  /* fade laterale */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 6%,
-    black 94%,
-    transparent
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 6%,
-    black 94%,
-    transparent
-  );
+  overflow: hidden;   /* ⬅️ chiave: niente scrollbar */
+  padding: 12px 48px; /* spazio per le frecce */
 }
-
+  .hero-slider{
+  position:relative;
+  padding: 0 48px; /* spazio frecce */
+}
 .hero-preview::-webkit-scrollbar{
   display: none;                /* Chrome / Safari */
 }
@@ -573,13 +592,15 @@
   </div>
 
   <!-- PREVIEW ORIZZONTALE -->
-  <div class="hero-preview">
-    <h3>Qualche titolo dalla collezione</h3>
+<div class="hero-preview">
+  <h3>Qualche titolo dalla collezione</h3>
+
+  <div class="hero-slider">
+    <button class="hero-arrow left">&#10094;</button>
+    <button class="hero-arrow right">&#10095;</button>
     <div class="hero-row" id="heroRow"></div>
   </div>
-
 </div>
-
 </section>
 
 <!-- CATALOGO -->
@@ -1509,15 +1530,16 @@ async function renderHeroGrid(){
 
   await Promise.all(promises);
 }
- function autoScrollHeroRow(){
+function autoScrollHeroRow(){
   const row = document.getElementById("heroRow");
-  if(!row) return;
+  const preview = row.parentElement;
+  const leftBtn  = preview.querySelector(".hero-arrow.left");
+  const rightBtn = preview.querySelector(".hero-arrow.right");
 
-  // evita doppie inizializzazioni
-  if(row.dataset.scrolling === "true") return;
+  if(!row || row.dataset.scrolling) return;
   row.dataset.scrolling = "true";
 
-  // duplica UNA SOLA VOLTA
+  // duplica per loop infinito
   row.innerHTML += row.innerHTML;
 
   let speed = 0.35;
@@ -1526,7 +1548,6 @@ async function renderHeroGrid(){
   function step(){
     if(!paused){
       row.scrollLeft += speed;
-
       if(row.scrollLeft >= row.scrollWidth / 2){
         row.scrollLeft = 0;
       }
@@ -1534,10 +1555,13 @@ async function renderHeroGrid(){
     requestAnimationFrame(step);
   }
 
-  row.addEventListener("mouseenter", () => paused = true);
-  row.addEventListener("mouseleave", () => paused = false);
-  row.addEventListener("touchstart", () => paused = true);
-  row.addEventListener("touchend", () => paused = false);
+  // hover pausa
+  preview.addEventListener("mouseenter", () => paused = true);
+  preview.addEventListener("mouseleave", () => paused = false);
+
+  // frecce
+  leftBtn.onclick = () => row.scrollLeft -= 300;
+  rightBtn.onclick = () => row.scrollLeft += 300;
 
   step();
 }
@@ -1561,6 +1585,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
