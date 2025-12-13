@@ -692,6 +692,15 @@
   </div>
 </div>
 <script>
+ const GS_BASE = "https://script.google.com/macros/s/AKfycbymZUtlVPioO6WFtQOfZ_XLXqFO4b48vHIZ4ZXOZosBPFX6y9S8psozQ3LyUbFlz4Pc3w/exec";
+
+const CACHE_KEYS = {
+  version: "CATALOG_CACHE_VERSION",
+  movies:  "CATALOG_CACHE_MOVIES",
+  heroGrid: "CATALOG_CACHE_HERO_GRID",
+  heroRow:  "CATALOG_CACHE_HERO_ROW",
+  time:    "CATALOG_CACHE_TIME"
+};
 const API_KEY  = '9298687fa5e1f883f34db8ce4844c806';
 // --- Modalità Admin ---
 const urlParams = new URLSearchParams(window.location.search);
@@ -1041,13 +1050,61 @@ const movies = [
   { title:'Beast Games', type:'tv' }
 
 ];
-let sheetLoaded = false;
 function normalizeTitle(t){
   return t
     .replace(/’/g, "'")  // apostrofo curvo → apostrofo normale
     .replace(/‘/g, "'")  // altro tipo di apostrofo curvo
     .toLowerCase()
     .trim();
+}
+  async function fetchRemoteVersion(){
+  try{
+    const res = await fetch(`${GS_BASE}?action=version`);
+    const data = await res.json();
+    return Number(data.version || 0);
+  }catch(e){
+    console.warn("Version check failed, fallback to cache");
+    return null;
+  }
+}
+  function clearCatalogCache(){
+  localStorage.removeItem(CACHE_KEYS.version);
+  localStorage.removeItem(CACHE_KEYS.movies);
+  localStorage.removeItem(CACHE_KEYS.time);
+  localStorage.removeItem(CACHE_KEYS.heroGrid);
+  localStorage.removeItem(CACHE_KEYS.heroRow);
+}
+async function loadMoviesWithCache(){
+
+  const localVersion = Number(localStorage.getItem(CACHE_KEYS.version));
+  const remoteVersion = await fetchRemoteVersion();
+
+  // 🔁 Se la versione è cambiata → invalida cache
+  if (remoteVersion && remoteVersion !== localVersion){
+    console.log("🔄 Cache invalidata (versione cambiata)");
+    clearCatalogCache();
+  }
+
+  // 📦 Se cache valida → usa quella
+  const cached = localStorage.getItem(CACHE_KEYS.movies);
+  if (cached){
+    console.log("⚡ Film caricati da cache");
+    return JSON.parse(cached);
+  }
+
+  // 🌐 Altrimenti carica normalmente (lento, ma una volta sola)
+  console.log("🌐 Caricamento film da rete");
+
+  await loadMoviesFromSheet(); // tua funzione esistente
+
+  // salva SOLO i film da foglio
+  const sheetMovies = movies.filter(m => m._fromSheet);
+
+  localStorage.setItem(CACHE_KEYS.movies, JSON.stringify(sheetMovies));
+  localStorage.setItem(CACHE_KEYS.version, remoteVersion || 1);
+  localStorage.setItem(CACHE_KEYS.time, Date.now());
+
+  return sheetMovies;
 }
   async function loadMoviesFromSheet() {
   sheetLoaded = false; // forziamo sempre reload
@@ -1088,16 +1145,6 @@ function normalizeTitle(t){
     console.error("Errore caricamento Google Sheet:", e);
   }
 }
-/* Titoli da usare come anteprima nella home */
-const HOME_PREVIEW_TITLES = [
-  'Fight Club',
-  'Harry Potter e la pietra filosofale',
-  'Shrek',
-  'Stranger Things',
-  'The Boys',
-  'Suits'
-];
-
 /* HOME -> CATALOGO */
 async function openCatalog(type){
   const home = document.getElementById('home');
@@ -1321,15 +1368,13 @@ async function showDetails(id, type){
 
 function closeModal(){ modal.style.display='none'; }
 // --- Funzioni Admin → chiamano Google Script ---
-
-const GS_BASE = "https://script.google.com/macros/s/AKfycbymZUtlVPioO6WFtQOfZ_XLXqFO4b48vHIZ4ZXOZosBPFX6y9S8psozQ3LyUbFlz4Pc3w/exec";
-
 function adminAddMovie(title, type = "movie") {
   if (!ADMIN_MODE) return alert("Non sei admin.");
   fetch(`${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}&todo=yes`)
     .then(r => r.text())
     .then(t => {
       alert("Aggiunto: " + t);
+      clearCatalogCache(); 
       renderGrid(currentCatalogType);
     });
 }
@@ -1344,6 +1389,7 @@ function adminMarkAsSeen(title) {
       sheetLoaded = false;               // ricarica foglio
      loadMoviesFromSheet().then(() => {
   grid.innerHTML = "";   // 🔥 SVUOTA LA GRIGLIA
+         clearCatalogCache(); 
   renderGrid(currentCatalogType);
     });
     });
@@ -1358,6 +1404,7 @@ function adminDeleteMovie(title) {
       sheetLoaded = false;
       loadMoviesFromSheet().then(() => {
         grid.innerHTML = "";
+        clearCatalogCache(); 
         renderGrid(currentCatalogType);
       });
     });
@@ -1457,58 +1504,80 @@ searchInput.addEventListener('input', () => {
 });
 
 /* ----------------- ANTEPRIMA HOME ------------------- */
+  async function fetchHomeItem(m){
+  try{
+    const typePath = m.type === 'movie' ? 'movie' : 'tv';
+    const query = encodeURIComponent(m.search || m.title);
+    const url = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=it-IT&query=${query}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if(!data.results || !data.results[0]) return null;
+
+    const item = data.results[0];
+
+    return {
+      id: item.id,
+      type: m.type,
+      title: m.title,
+      poster: item.poster_path,
+      year: item.release_date?.substring(0,4) || ""
+    };
+  }catch(e){
+    return null;
+  }
+}
+function renderCachedHomeCard(item, container){
+  const card = document.createElement("div");
+  card.className = "home-card";
+
+  const poster = item.poster
+    ? `https://image.tmdb.org/t/p/w342${item.poster}`
+    : "";
+
+  card.innerHTML = `
+    ${poster ? `<img src="${poster}">` : ""}
+    <div class="title">${item.title}</div>
+    <div class="meta">Film ${item.year ? "· "+item.year : ""}</div>
+  `;
+
+  card.onclick = () => showDetails(item.id, item.type);
+  container.appendChild(card);
+}
 async function renderHeroRow(){
   const row = document.getElementById("heroRow");
   if(!row) return;
+
   row.innerHTML = "";
+
+  const cached = localStorage.getItem(CACHE_KEYS.heroRow);
+  if (cached){
+    const items = JSON.parse(cached);
+    for(const item of items){
+      renderCachedHomeCard(item, row);
+    }
+    console.log("⚡ Hero row da cache");
+    return;
+  }
+
+  console.log("🌐 Hero row da TMDb");
 
   const picks = movies
     .filter(m => m.type === "movie")
     .sort(() => 0.5 - Math.random())
     .slice(0, 12);
 
+  const cachedItems = [];
+
   for(const m of picks){
-    await addHomeCardFor(m, row);
-  }
-}
-/* Card per la home (usa stessa API, ma griglia diversa) */
-async function addHomeCardFor(m, container = homeGrid){
-  try{
-    const typePath = m.type === 'movie' ? 'movie' : 'tv';
-    const query    = encodeURIComponent(m.search || m.title);
-    const url      = `${API_BASE}/search/${typePath}?api_key=${API_KEY}&language=it-IT&query=${query}&page=1`;
-    const res      = await fetch(url);
-    const data     = await res.json();
-
-    let item = null;
-    if (data.results && data.results.length > 0) {
-      item = data.results[0];
+    const data = await fetchHomeItem(m);
+    if (data){
+      cachedItems.push(data);
+      renderCachedHomeCard(data, row);
     }
-
-    const card = document.createElement('div');
-    card.className = 'home-card';
-
-    if (!item){
-      card.innerHTML = `<div class="title">${m.title}</div><div class="meta">Non trovato su TMDb</div>`;
-      container.appendChild(card);
-      return;
-    }
-
-    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
-    const year   = m.type === 'movie'
-      ? (item.release_date  ? item.release_date.substring(0,4)  : '')
-      : (item.first_air_date? item.first_air_date.substring(0,4): '');
-
-    card.innerHTML = `
-      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
-      <div class="title">${m.title}</div>
-      <div class="meta">${m.type === 'movie' ? 'Film' : 'Serie TV'} ${year ? '· '+year : ''}</div>
-    `;
-    card.onclick = () => showDetails(item.id, m.type);
-    container.appendChild(card);
-  }catch(e){
-    console.error('Errore anteprima home', e);
   }
+
+  localStorage.setItem(CACHE_KEYS.heroRow, JSON.stringify(cachedItems));
 }
   function updateCatalogFooter() {
   const filmCount = movies.filter(
@@ -1532,12 +1601,32 @@ async function renderHeroGrid(){
 
   heroGrid.innerHTML = "";
 
+  // 📦 cache
+  const cached = localStorage.getItem(CACHE_KEYS.heroGrid);
+  if (cached){
+    const posters = JSON.parse(cached);
+    posters.forEach(p => {
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
+      heroGrid.appendChild(img);
+    });
+    console.log("⚡ Hero grid da cache");
+    return;
+  }
+
+  // 🌐 fetch lento (solo una volta)
+  console.log("🌐 Hero grid da TMDb");
+
   const picks = movies
     .filter(m => m.type === "movie")
     .sort(() => 0.5 - Math.random())
     .slice(0, 70);
 
-  const promises = picks.map(async m => {
+  const posters = [];
+
+  for (const m of picks){
     try{
       const query = encodeURIComponent(m.search || m.title);
       const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
@@ -1545,16 +1634,21 @@ async function renderHeroGrid(){
       const data = await res.json();
 
       if(data.results && data.results[0]?.poster_path){
-        const img = document.createElement("img");
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.src = `https://image.tmdb.org/t/p/w342${data.results[0].poster_path}`;
-        heroGrid.appendChild(img);
+        posters.push({ poster: data.results[0].poster_path });
       }
     }catch(e){}
+  }
+
+  // render
+  posters.forEach(p => {
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
+    heroGrid.appendChild(img);
   });
 
-  await Promise.all(promises);
+  localStorage.setItem(CACHE_KEYS.heroGrid, JSON.stringify(posters));
 }
 function autoScrollHeroRow(){
   const track = document.getElementById("heroTrack");
@@ -1566,8 +1660,10 @@ function autoScrollHeroRow(){
   track.dataset.scrolling = "true";
 
   // duplica contenuto per loop infinito
+if (!row.dataset.cloned) {
   row.innerHTML += row.innerHTML;
-
+  row.dataset.cloned = "true";
+}
   let speed = 0.35;
   let paused = false;
 
@@ -1616,7 +1712,7 @@ function autoScrollHeroRow(){
 }
 /* AVVIO COMPLETO */
 (async () => {
-  await loadMoviesFromSheet();
+  await loadMoviesWithCache();
   await renderHeroGrid();  
   await renderHeroRow();
   autoScrollHeroRow();
@@ -1635,6 +1731,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
