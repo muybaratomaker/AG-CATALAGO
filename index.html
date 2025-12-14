@@ -46,9 +46,15 @@
   display:grid;
   grid-template-columns:repeat(12, 1fr);
   gap:12px;    
-  transform:rotate(-7deg);
-  opacity:0.55;
+  transform:rotate(-7deg) scale(1.03);
+  opacity:0;
+  transition: opacity .9s ease, transform .9s ease;
 }
+.hero-grid.visible{
+  opacity:0.55;
+  transform:rotate(-7deg) scale(1);
+}
+
 
 .hero-grid img{
   box-shadow:0 6px 18px rgba(0,0,0,0.45);
@@ -1667,7 +1673,9 @@ async function renderHeroGrid(){
     img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
     heroGrid.appendChild(img);
   });
-
+requestAnimationFrame(() => {
+  heroGrid.classList.add("visible");
+});
   localStorage.setItem(CACHE_KEYS.heroGrid, JSON.stringify(posters));
 }
 function autoScrollHeroRow(){
@@ -1765,6 +1773,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
