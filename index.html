@@ -753,6 +753,7 @@ const CATEGORY_DEFS = [
 
 let activeCategory     = null;
 let currentCatalogType = null;
+let sheetLoaded = false;
 
 const filtersDiv   = document.getElementById('filters');
 const grid         = document.getElementById('grid');
@@ -1102,28 +1103,39 @@ function normalizeTitle(t){
 }
 async function loadMoviesWithCache(){
 
-  const localVersion = Number(localStorage.getItem(CACHE_KEYS.version));
+  const localVersion  = Number(localStorage.getItem(CACHE_KEYS.version));
   const remoteVersion = await fetchRemoteVersion();
 
-  // 🔁 Se la versione è cambiata → invalida cache
+  // 🔁 se versione diversa → invalida cache
   if (remoteVersion && remoteVersion !== localVersion){
-    console.log("🔄 Cache invalidata (versione cambiata)");
     clearCatalogCache();
   }
 
-  // 📦 Se cache valida → usa quella
   const cached = localStorage.getItem(CACHE_KEYS.movies);
+
+  // 📦 CACHE VALIDA
   if (cached){
     console.log("⚡ Film caricati da cache");
-    return JSON.parse(cached);
+
+    const cachedMovies = JSON.parse(cached);
+
+    // 🔥 RIMUOVI vecchi film da foglio
+    for (let i = movies.length - 1; i >= 0; i--) {
+      if (movies[i]._fromSheet) movies.splice(i, 1);
+    }
+
+    // 🔥 REINSERISCI quelli da cache
+    cachedMovies.forEach(m => {
+      movies.push({ ...m, _fromSheet: true });
+    });
+    return cachedMovies;
   }
 
-  // 🌐 Altrimenti carica normalmente (lento, ma una volta sola)
+  // 🌐 PRIMO LOAD (rete)
   console.log("🌐 Caricamento film da rete");
 
-  await loadMoviesFromSheet(); // tua funzione esistente
+  await loadMoviesFromSheet();
 
-  // salva SOLO i film da foglio
   const sheetMovies = movies.filter(m => m._fromSheet);
 
   localStorage.setItem(CACHE_KEYS.movies, JSON.stringify(sheetMovies));
@@ -1638,6 +1650,7 @@ async function renderHeroGrid(){
       img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
       heroGrid.appendChild(img);
     });
+    heroGrid.classList.add("visible");
     console.log("⚡ Hero grid da cache");
     return;
   }
@@ -1689,8 +1702,8 @@ function autoScrollHeroRow(){
 
   // duplica contenuto per loop infinito
 if (!row.dataset.cloned) {
-  row.innerHTML += row.innerHTML;
   row.dataset.cloned = "true";
+  row.innerHTML = row.innerHTML + row.innerHTML;
 }
   let speed = 0.35;
   let paused = false;
@@ -1773,6 +1786,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
