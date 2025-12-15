@@ -1771,26 +1771,13 @@ if (!row.dataset.cloned) {
 }
 /* AVVIO COMPLETO */
 (async () => {
-  // 1️⃣ dati base (veloce)
   await loadMoviesWithCache();
-
-  // 2️⃣ lascia respirare il browser
-  requestAnimationFrame(async () => {
-
-    // 3️⃣ hero grid (pesante)
-    await renderHeroGrid();
-
-    // 4️⃣ ancora un frame
-    requestAnimationFrame(async () => {
-
-      await renderHeroRow();
-
-      // animazioni SOLO dopo
-      autoScrollHeroRow();
-      enableDragScroll();
-
-    });
-  });
+  await renderHeroGrid();  
+  await renderHeroRow();
+  autoScrollHeroRow();
+  enableDragScroll();
+  ...
+})();
   // loader come ora
 })();
     // rimuove overlay
@@ -1821,6 +1808,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
