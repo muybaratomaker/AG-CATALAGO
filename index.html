@@ -47,7 +47,7 @@
   grid-template-columns:repeat(12, 1fr);
   gap:12px;    
   transform:rotate(-7deg) scale(1.03);
-  opacity:0;
+  opacity:0,25;
   transition: opacity .9s ease, transform .9s ease;
 }
 .hero-grid.visible{
@@ -1771,11 +1771,28 @@ if (!row.dataset.cloned) {
 }
 /* AVVIO COMPLETO */
 (async () => {
+  // 1️⃣ dati base (veloce)
   await loadMoviesWithCache();
-  await renderHeroGrid();  
-  await renderHeroRow();
-  autoScrollHeroRow();
-  enableDragScroll();
+
+  // 2️⃣ lascia respirare il browser
+  requestAnimationFrame(async () => {
+
+    // 3️⃣ hero grid (pesante)
+    await renderHeroGrid();
+
+    // 4️⃣ ancora un frame
+    requestAnimationFrame(async () => {
+
+      await renderHeroRow();
+
+      // animazioni SOLO dopo
+      autoScrollHeroRow();
+      enableDragScroll();
+
+    });
+  });
+  // loader come ora
+})();
     // rimuove overlay
 const FIRST_LOAD_KEY = "AG_FIRST_LOAD_DONE";
 
@@ -1804,6 +1821,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
