@@ -547,24 +547,22 @@
 .hero-preview{
   overflow:hidden;
   margin-top: 40px;
+  padding-bottom:40px;
+  rgba(5,6,10,0.55)
 } 
 .hero-preview::before{
   content:"";
   position:absolute;
-  inset:-20px -10px;   /* sborda leggermente */
-  background:
-    radial-gradient(
-      circle at top center,
-      rgba(255,255,255,0.06),
-      rgba(5,6,10,0.45) 45%
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(5,6,10,0.35),
-      rgba(5,6,10,0.85)
-    );
-  border-radius: 28px;
-  z-index:-1;
+  left:0;
+  right:0;
+  bottom:-10px;
+  height:140px; /* ⬅️ SOLO LA PARTE BASSA */
+  background:linear-gradient(
+    to bottom,
+    rgba(5,6,10,0.0),
+    rgba(5,6,10,0.55)
+  );
+  pointer-events:none;
 }
 
 .hero-slider{
@@ -1806,6 +1804,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
