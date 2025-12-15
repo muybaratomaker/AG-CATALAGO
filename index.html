@@ -1583,7 +1583,7 @@ searchInput.addEventListener('input', () => {
     return null;
   }
 }
-function renderCachedHomeCard(item, container){
+function renderCachedHomeCard(item, container) {
   const card = document.createElement("div");
   card.className = "home-card";
 
@@ -1592,7 +1592,7 @@ function renderCachedHomeCard(item, container){
     : "";
 
   card.innerHTML = `
-    ${poster ? `<img src="${poster}">` : ""}
+    ${poster ? `<img src="${poster}" loading="lazy" decoding="async">` : ""}
     <div class="title">${item.title}</div>
     <div class="meta">Film ${item.year ? "· "+item.year : ""}</div>
   `;
@@ -1651,20 +1651,20 @@ async function renderHeroRow(){
   document.getElementById("catalog-footer").textContent =
     `Film totali: ${filmCount} — Serie TV: ${tvCount} — Da vedere: ${todoCount}`;
 }
-async function renderHeroGrid(){
+async function renderHeroGrid() {
   const heroGrid = document.getElementById("heroGrid");
-  if(!heroGrid) return;
+  if (!heroGrid) return;
 
   heroGrid.innerHTML = "";
 
   // 📦 cache
   const cached = localStorage.getItem(CACHE_KEYS.heroGrid);
-  if (cached){
+  if (cached) {
     const posters = JSON.parse(cached);
     posters.forEach(p => {
       const img = document.createElement("img");
-      img.loading = "lazy";
-      img.decoding = "async";
+      img.loading = "lazy";  // Lazy loading per le immagini
+      img.decoding = "async";  // Decoding asincrono
       img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
       heroGrid.appendChild(img);
     });
@@ -1681,33 +1681,40 @@ async function renderHeroGrid(){
     .sort(() => 0.5 - Math.random())
     .slice(0, 70);
 
-  const posters = [];
+  const promises = picks.map(m => {
+    const query = encodeURIComponent(m.search || m.title);
+    const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
+    return fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.results && data.results[0]?.poster_path) {
+          return { poster: data.results[0].poster_path };
+        }
+        return null;
+      })
+      .catch(() => null);
+  });
 
-  for (const m of picks){
-    try{
-      const query = encodeURIComponent(m.search || m.title);
-      const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
-      const res = await fetch(url);
-      const data = await res.json();
+  // Risultati in parallelo
+  const posters = await Promise.all(promises);
 
-      if(data.results && data.results[0]?.poster_path){
-        posters.push({ poster: data.results[0].poster_path });
-      }
-    }catch(e){}
-  }
+  // Filtra i risultati validi (poster non nulli)
+  const validPosters = posters.filter(p => p !== null);
 
-  // render
-  posters.forEach(p => {
+  // Renderizza le immagini nella griglia
+  validPosters.forEach(p => {
     const img = document.createElement("img");
-    img.loading = "lazy";
-    img.decoding = "async";
+    img.loading = "lazy";  // Lazy loading per le immagini
+    img.decoding = "async";  // Decoding asincrono
     img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
     heroGrid.appendChild(img);
   });
-requestAnimationFrame(() => {
-  heroGrid.classList.add("visible");
-});
-  localStorage.setItem(CACHE_KEYS.heroGrid, JSON.stringify(posters));
+
+  requestAnimationFrame(() => {
+    heroGrid.classList.add("visible");
+  });
+
+  localStorage.setItem(CACHE_KEYS.heroGrid, JSON.stringify(validPosters));
 }
 function autoScrollHeroRow(){
   const track = document.getElementById("heroTrack");
@@ -1789,6 +1796,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
