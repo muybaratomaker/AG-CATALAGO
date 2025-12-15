@@ -1777,22 +1777,6 @@ if (!row.dataset.cloned) {
   autoScrollHeroRow();
   enableDragScroll();
 })();
-// rimuove overlay
-const FIRST_LOAD_KEY = "AG_FIRST_LOAD_DONE";
-
-const loader = document.getElementById("hero-loader");
-if (loader) {
-  if (localStorage.getItem(FIRST_LOAD_KEY)) {
-    loader.remove();
-  } else {
-    loader.addEventListener("animationend", () => {
-      localStorage.setItem(FIRST_LOAD_KEY, "1");
-      loader.remove();
-    });
-  }
-}
-})();
-
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
 window.addEventListener("scroll", () => {
     const bar = document.querySelector(".controls");
@@ -1805,6 +1789,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
