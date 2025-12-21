@@ -70,7 +70,7 @@
   grid-template-columns:repeat(12, 1fr);
   gap:12px;    
   transform:rotate(-7deg) scale(1.03);
-  opacity:0,25;
+  opacity:0.25;
   transition: opacity .9s ease, transform .9s ease;
 }
 .hero-grid.visible{
@@ -568,11 +568,12 @@
   letter-spacing: 0.4px;
 }
 .hero-preview{
+  position:relative;              /* ✅ necessario per ::before */
   overflow:hidden;
   margin-top: 40px;
   padding-bottom:40px;
-  rgba(5,6,10,0.55)
-} 
+  background: rgba(5,6,10,0.55);  /* ✅ */
+}
 .hero-preview::before{
   content:"";
   position:absolute;
@@ -597,7 +598,7 @@
   overflow-x: scroll;
   overflow-y: hidden;
   scrollbar-width: none;
-  -ms-overflow-: none;
+  -ms-overflow-style: none;
   cursor: grab;
   scroll-behavior: smooth; 
 }
@@ -693,7 +694,7 @@
     </div>
   </div>
 </div>
-
+</div>
 </section>
 
 <!-- CATALOGO -->
@@ -1610,6 +1611,10 @@ function renderCachedHomeCard(item, container) {
   const card = document.createElement("div");
   card.className = "home-card";
 
+  // ✅ dati per click via delega
+  card.dataset.id = item.id;
+  card.dataset.type = item.type;
+
   const poster = item.poster
     ? `https://image.tmdb.org/t/p/w342${item.poster}`
     : "";
@@ -1617,10 +1622,9 @@ function renderCachedHomeCard(item, container) {
   card.innerHTML = `
     ${poster ? `<img src="${poster}" loading="lazy" decoding="async">` : ""}
     <div class="title">${item.title}</div>
-    <div class="meta">Film ${item.year ? "· "+item.year : ""}</div>
+    <div class="meta">${item.type === "tv" ? "Serie" : "Film"} ${item.year ? "· "+item.year : ""}</div>
   `;
 
-  card.onclick = () => showDetails(item.id, item.type);
   container.appendChild(card);
 }
 async function renderHeroRow(){
@@ -1751,7 +1755,8 @@ function autoScrollHeroRow(){
   // duplica contenuto per loop infinito
 if (!row.dataset.cloned) {
   row.dataset.cloned = "true";
-  row.innerHTML = row.innerHTML + row.innerHTML;
+  const originals = Array.from(row.children);
+  originals.forEach(el => row.appendChild(el.cloneNode(true)));
 }
   let speed = 0.35;
   let paused = false;
@@ -1804,6 +1809,12 @@ if (!row.dataset.cloned) {
   await loadMoviesWithCache();
   await renderHeroGrid();  
   await renderHeroRow();
+  const row = document.getElementById("heroRow");
+  row.addEventListener("click", (e) => {
+  const card = e.target.closest(".home-card");
+  if (!card) return;
+  showDetails(card.dataset.id, card.dataset.type);
+});
   autoScrollHeroRow();
   enableDragScroll();
 })();
@@ -1819,6 +1830,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
