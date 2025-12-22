@@ -35,7 +35,9 @@
   :root{--accent:#2196F3}
 
   *{box-sizing:border-box}
-
+  html, body{
+  overflow-x: hidden;
+}
   body{
     margin:0;
     font-family:Inter, Arial, sans-serif;
@@ -568,23 +570,23 @@
   letter-spacing: 0.4px;
 }
 .hero-preview{
-  position:relative;
-  overflow:hidden;
+  position: relative;
+  overflow: hidden;
 
-  margin-top: 110px;        /* un pelo meno dominante */
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 140px 0 0;
+
   padding: 18px 18px 26px;
+  box-sizing: border-box;
 
-  width: 100vw;                          /* ✅ full viewport */
-  margin-left: calc(50% - 50vw);         /* ✅ breakout corretto */
-  margin-right: calc(50% - 50vw);
-
-  background: rgba(5,6,10,0.32);         /* ✅ meno “pesante” */
+  background: rgba(5,6,10,0.32);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
   border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 22px;                   /* ✅ più morbido */
-  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  border-radius: 22px;
 }
 .hero-preview::before{
   content:"";
@@ -637,7 +639,7 @@
   display:flex;
   gap:14px;
   padding:6px;
-  margin-top: 14px
+  margin-top: 14px;
 }
 
 /* card piccole nella preview */
@@ -1852,6 +1854,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
