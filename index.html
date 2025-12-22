@@ -99,8 +99,22 @@ html, body{
 
 /* default più “piccolo” */
 .hero-grid .tile{
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+  background: rgba(255,255,255,0.02);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55);
   grid-column: span 2;
   grid-row: span 2;          /* ⬅️ prima era 3, ora è più fitto */
+}
+  .hero-grid .tile img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  filter: brightness(0.95) saturate(1.08) contrast(1.05);
+  transform: scale(1.02);
+  will-change: transform;
 }
 
 /* varianti */
@@ -1660,6 +1674,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
