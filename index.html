@@ -35,8 +35,10 @@
   :root{--accent:#2196F3}
 
   *{box-sizing:border-box}
-  html, body{
-  overflow-x: hidden;
+html, body{
+  width:100%;
+  overflow-x: hidden; /* fallback */
+  overflow-x: clip;   /* meglio: evita la barra senza “tagliare” */
 }
   body{
     margin:0;
@@ -352,6 +354,11 @@
 .controls.scrolled .search{
   display:none;
 }
+  @media (max-width: 768px){
+  .controls.scrolled .search{
+    display:flex !important;
+  }
+}
 
 /* Logo mini AG */
 .logo-mini {
@@ -599,28 +606,28 @@
   position: relative;
   overflow: hidden;
 
-  /* full width senza “sbordare” in modo strano */
-  width: 100%;
-  margin-top: 88px;
-
-  /* esci dal max-width del container e vai edge-to-edge */
+  /* full-bleed stabile (niente barra sotto) */
+  width: 100vw;    /* fallback */
+  width: 100dvw;   /* migliore su browser moderni */
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+  margin-left: calc(50% - 50dvw);
+  margin-right: calc(50% - 50dvw);
 
-  padding: 18px 18px 22px;
+  margin-top: 120px;
+  padding: 18px 18px 26px;
   box-sizing: border-box;
 
-  /* look più “sezione”, meno “popup” */
-  background: rgba(5,6,10,0.22);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(5,6,10,0.32);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+
+  /* se la vuoi proprio “edge to edge” pulita */
   border-radius: 0;
 }
-
 /* titolo stile Netflix: a sinistra su desktop, centrato su mobile */
 .hero-preview h3{
   margin: 0 0 14px;
@@ -670,8 +677,10 @@
 
 .hero-slider{
   position:relative;
-  padding:0 32px;
+  padding:0 44px;
 }
+.hero-arrow.left{ left:10px; }
+.hero-arrow.right{ right:10px; }
 
 .hero-track{
   overflow-x: scroll;
@@ -1919,6 +1928,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
