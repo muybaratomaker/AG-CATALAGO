@@ -545,14 +545,14 @@
 
 
 .hero-center h1{
-  font-size:64px;
+  font-size:74px;
   margin:0 0 14px;
   letter-spacing:1px;
   text-shadow:0 6px 30px rgba(0,0,0,0.85);
 }
 
 .hero-sub{
-  font-size:20px;
+  font-size:22px;
   max-width:720px;
   margin:0 auto 28px;
   color:#d6dde6;
@@ -562,43 +562,29 @@
 .hero-preview h3{
   margin: 18px 0 22px;     /* ⬅️ più staccato dall’alto */
   text-align: center;
-  font-size: 24px;         /* ⬅️ più grande */
+  font-size: 20px;         /* ⬅️ più grande */
   font-weight: 650;
   color:#e6e6e6;
   letter-spacing: 0.4px;
 }
 .hero-preview{
-  position:relative;               /* necessario per ::before */
+  position:relative;
   overflow:hidden;
-  margin-top: 120px;                /* aumenta se la vuoi più in basso (es. 70px) */
-  padding-bottom:40px;
-  background: rgba(5,6,10,0.55);
 
-  width: 100%;                    /* preview full width */
-  margin-left: calc(50% - 50vw);   /* esce dal contenitore centrato */
+  margin-top: 110px;        /* un pelo meno dominante */
+  padding: 18px 18px 26px;
+
+  width: 100vw;                          /* ✅ full viewport */
+  margin-left: calc(50% - 50vw);         /* ✅ breakout corretto */
   margin-right: calc(50% - 50vw);
-  padding-left: 18px;
-  padding-right: 18px;
-    background: rgba(5,6,10,0.45);
+
+  background: rgba(5,6,10,0.32);         /* ✅ meno “pesante” */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 
-  /* bordi meno “netti” */
-  border: 1px solid rgba(255,255,255,0.06);
-
-  /* sfuma ai lati (effetto “soft”) */
-  -webkit-mask-image: linear-gradient(to right,
-    transparent 0%,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(to right,
-    transparent 0%,
-    #000 6%,
-    #000 94%,
-    transparent 100%
-  );
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 22px;                   /* ✅ più morbido */
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
 }
 .hero-preview::before{
   content:"";
@@ -656,8 +642,8 @@
 
 /* card piccole nella preview */
 .hero-row .home-card{
-  min-width:210px;
-  max-width:210px;
+  min-width:190px;
+  max-width:190px;
   flex:0 0 auto;
 }
   #hero-loader{
@@ -1866,6 +1852,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
