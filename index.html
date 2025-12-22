@@ -72,22 +72,23 @@ html, body{
   height:155%;
 
   display:grid;
-  grid-template-columns: repeat(14, 1fr);          /* meno colonne = più grande */
-  grid-auto-rows: clamp(46px, 4.6vw, 86px);        /* righe più alte */
+  grid-template-columns: repeat(16, 1fr);
+  grid-auto-rows: clamp(32px, 3.4vw, 60px);
   gap:12px;
+
+  grid-auto-flow: dense;
 
   transform:
     perspective(1200px)
     rotateX(8deg)
     rotateZ(-13deg)
-    scale(1.08);
+    scale(1.04);
 
   transform-origin: 50% 40%;
   opacity:0.18;
   transition: opacity .9s ease, transform .9s ease;
   will-change: transform, opacity;
 }
-
 .hero-grid.visible{
   opacity:0.62;
   transform:
@@ -105,35 +106,36 @@ html, body{
   background: rgba(255,255,255,0.02);
   box-shadow: 0 10px 26px rgba(0,0,0,0.55);
 
-  grid-column: span 3;   /* prima 2 */
-  grid-row: span 3;      /* prima 2 */
+  /* ✅ poster look: verticale */
+  grid-column: span 2;
+  grid-row: span 3;
 }
-  .hero-grid .tile img{
+
+.hero-grid .tile img{
   width:100%;
   height:100%;
   display:block;
   object-fit:cover;
-  filter: brightness(0.95) saturate(1.08) contrast(1.05);
-  transform: scale(1.02);
-  will-change: transform;
+  object-position:center;
+  transform:none;              /* ✅ niente zoom strano */
 }
 
-/* varianti */
-.hero-grid .tile--tall{ grid-row: span 4; }
-.hero-grid .tile--big { grid-column: span 4; grid-row: span 4; }
-.hero-grid .tile--wide{ grid-column: span 6; grid-row: span 3; } /* wide più “cinema” */
+/* varianti coerenti */
+.hero-grid .tile--tall{ grid-column: span 2; grid-row: span 4; }
+.hero-grid .tile--big { grid-column: span 3; grid-row: span 5; }  /* “poster grande” */
+.hero-grid .tile--wide{ grid-column: span 6; grid-row: span 3; }  /* “cinema” */
 
 @media (max-width: 700px){
   .hero-grid{
-    grid-template-columns: repeat(10, 1fr);
-    grid-auto-rows: clamp(34px, 8vw, 64px);
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: clamp(26px, 6.2vw, 52px);
     top:-18%;
     left:-18%;
     width:145%;
     height:145%;
     gap:10px;
   }
-  .hero-grid .tile--wide{ grid-column: span 8; grid-row: span 3; }
+  .hero-grid .tile--wide{ grid-column: span 10; grid-row: span 3; }
 }
 /* Overlay scuro + vignetta */
 .hero-overlay{
@@ -1575,7 +1577,7 @@ posters.forEach(p => {
 
   const isWide = tile.classList.contains("tile--wide");
   const path   = (isWide && p.backdrop) ? p.backdrop : p.poster;
-  const size   = isWide ? "w780" : "w342";
+  const size   = isWide ? "w780" : "w500";
 
   img.src = `https://image.tmdb.org/t/p/${size}${path}`;
 
@@ -1640,7 +1642,7 @@ finalPosters.forEach(p => {
 
   const isWide = tile.classList.contains("tile--wide");
   const path   = (isWide && p.backdrop) ? p.backdrop : p.poster;
-  const size   = isWide ? "w780" : "w342";
+  const size   = isWide ? "w780" : "w500";
 
   img.src = `https://image.tmdb.org/t/p/${size}${path}`;
 
@@ -1671,6 +1673,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
