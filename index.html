@@ -568,11 +568,17 @@
   letter-spacing: 0.4px;
 }
 .hero-preview{
-  position:relative;              /* ✅ necessario per ::before */
+  position:relative;               /* necessario per ::before */
   overflow:hidden;
-  margin-top: 40px;
+  margin-top: 40px;                /* aumenta se la vuoi più in basso (es. 70px) */
   padding-bottom:40px;
-  background: rgba(5,6,10,0.55);  /* ✅ */
+  background: rgba(5,6,10,0.55);
+
+  width: 100vw;                    /* preview full width */
+  margin-left: calc(50% - 50vw);   /* esce dal contenitore centrato */
+  margin-right: calc(50% - 50vw);
+  padding-left: 18px;
+  padding-right: 18px;
 }
 .hero-preview::before{
   content:"";
@@ -1830,6 +1836,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
