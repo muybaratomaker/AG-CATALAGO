@@ -66,29 +66,89 @@ html, body{
 
 .hero-grid{
   position:absolute;
-  top:-20%;
-  left:-20%;
-  width:140%;
-  height:140%;
+  top:-35%;
+  left:-35%;
+  width:170%;
+  height:170%;
+
   display:grid;
-  grid-template-columns:repeat(12, 1fr);
-  gap:12px;    
-  transform:rotate(-7deg) scale(1.03);
-  opacity:0.25;
+  grid-template-columns: repeat(14, 1fr);
+  grid-auto-rows: clamp(46px, 6.2vw, 92px);
+  gap:12px;
+
+  /* Netflix-ish: prospettiva + inclinazione */
+  transform:
+    perspective(1200px)
+    rotateX(8deg)
+    rotateZ(-13deg)
+    scale(1.08);
+
+  transform-origin: 50% 40%;
+  opacity:0.18;
   transition: opacity .9s ease, transform .9s ease;
+  will-change: transform, opacity;
 }
+
 .hero-grid.visible{
-  opacity:0.65;
-  transform:rotate(-7deg) scale(1);
+  opacity:0.62;
+  transform:
+    perspective(1200px)
+    rotateX(8deg)
+    rotateZ(-13deg)
+    scale(1);
 }
 
+/* ✅ ogni tile è un “contenitore” */
+.hero-grid .tile{
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+  background: rgba(255,255,255,0.02);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55);
+}
 
-.hero-grid img{
-  box-shadow:0 6px 18px rgba(0,0,0,0.45);
+/* default: poster verticale */
+.hero-grid .tile{
+  grid-column: span 2;
+  grid-row: span 3;
+}
+
+/* qualche tile più alta */
+.hero-grid .tile--tall{
+  grid-row: span 4;
+}
+
+/* tile grande (tipo “featured”) */
+.hero-grid .tile--big{
+  grid-column: span 3;
+  grid-row: span 4;
+}
+
+/* tile orizzontale */
+.hero-grid .tile--wide{
+  grid-column: span 4;
+  grid-row: span 2;
+}
+
+.hero-grid .tile img{
   width:100%;
-  border-radius:8px;
+  height:100%;
   object-fit:cover;
-  filter:brightness(1);
+  filter: brightness(0.95) saturate(1.08) contrast(1.05);
+  transform: scale(1.02);
+}
+
+/* mobile: meno colonne e celle più grandi */
+@media (max-width: 700px){
+  .hero-grid{
+    grid-template-columns: repeat(10, 1fr);
+    grid-auto-rows: clamp(44px, 10vw, 80px);
+    top:-30%;
+    left:-30%;
+    width:160%;
+    height:160%;
+  }
+  .hero-grid .tile--wide{ grid-column: span 5; }
 }
 /* Overlay scuro + vignetta */
 .hero-overlay{
@@ -1504,20 +1564,41 @@ async function renderHeroGrid() {
 
   // 📦 cache
   const cached = localStorage.getItem(CACHE_KEYS.heroGrid);
-  if (cached) {
-    const posters = JSON.parse(cached);
-    posters.forEach(p => {
-      const img = document.createElement("img");
-      img.loading = "lazy";  // Lazy loading per le immagini
-      img.decoding = "async";  // Decoding asincrono
-      img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
-      heroGrid.appendChild(img);
-    });
-    heroGrid.classList.add("visible");
-    console.log("⚡ Hero grid da cache");
-    return;
-  }
+if (cached) {
+  const posters = JSON.parse(cached);
 
+  posters.forEach(p => {
+    if (typeof p === "string") p = { poster: p, backdrop: null };
+
+    const tile = document.createElement("div");
+    tile.className = "tile";
+
+    // in cache puoi mantenere un po' di varietà,
+    // ma se non hai backdrop non farà i wide (giusto così)
+    const r = Math.random();
+    if (p.backdrop && r < 0.22) tile.classList.add("tile--wide");
+    else if (r < 0.30) tile.classList.add("tile--big");
+    else if (r < 0.44) tile.classList.add("tile--tall");
+
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.decoding = "async";
+
+    const path = tile.classList.contains("tile--wide")
+      ? (p.backdrop || p.poster)
+      : p.poster;
+
+    const size = tile.classList.contains("tile--wide") ? "w780" : "w342";
+    img.src = `https://image.tmdb.org/t/p/${size}${path}`;
+
+    tile.appendChild(img);
+    heroGrid.appendChild(tile);
+  });
+
+  heroGrid.classList.add("visible");
+  console.log("⚡ Hero grid da cache");
+  return;
+}
   // 🌐 fetch lento (solo una volta)
   console.log("🌐 Hero grid da TMDb");
 
@@ -1531,12 +1612,15 @@ async function renderHeroGrid() {
     const url = `${API_BASE}/search/movie?api_key=${API_KEY}&language=it-IT&query=${query}`;
     return fetch(url)
       .then(res => res.json())
-      .then(data => {
-        if (data.results && data.results[0]?.poster_path) {
-          return { poster: data.results[0].poster_path };
-        }
-        return null;
-      })
+.then(data => {
+  if (data.results && data.results[0]?.poster_path) {
+    return {
+      poster: data.results[0].poster_path,
+      backdrop: data.results[0].backdrop_path || null
+    };
+  }
+  return null;
+})
       .catch(() => null);
   });
 
@@ -1547,13 +1631,34 @@ async function renderHeroGrid() {
   const validPosters = posters.filter(p => p !== null);
 
   // Renderizza le immagini nella griglia
-  validPosters.forEach(p => {
-    const img = document.createElement("img");
-    img.loading = "lazy";  // Lazy loading per le immagini
-    img.decoding = "async";  // Decoding asincrono
-    img.src = `https://image.tmdb.org/t/p/w342${p.poster}`;
-    heroGrid.appendChild(img);
-  });
+validPosters.forEach(p => {
+  // compatibilità: se in cache c’era solo una stringa
+  if (typeof p === "string") p = { poster: p, backdrop: null };
+
+  const tile = document.createElement("div");
+  tile.className = "tile";
+
+  // probabilità forme (wide solo se ho backdrop)
+  const r = Math.random();
+  if (p.backdrop && r < 0.22) tile.classList.add("tile--wide");
+  else if (r < 0.30) tile.classList.add("tile--big");
+  else if (r < 0.44) tile.classList.add("tile--tall");
+
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.decoding = "async";
+
+  const path = tile.classList.contains("tile--wide")
+    ? (p.backdrop || p.poster)
+    : p.poster;
+
+  // backdrop meglio un po' più grande
+  const size = tile.classList.contains("tile--wide") ? "w780" : "w342";
+  img.src = `https://image.tmdb.org/t/p/${size}${path}`;
+
+  tile.appendChild(img);
+  heroGrid.appendChild(tile);
+});
 
   requestAnimationFrame(() => {
     heroGrid.classList.add("visible");
@@ -1578,6 +1683,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
