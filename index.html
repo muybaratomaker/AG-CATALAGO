@@ -66,37 +66,69 @@ html, body{
 
 .hero-grid{
   position:absolute;
-  top:-20%;
-  left:-20%;
-  width:140%;
-  height:140%;
+  top:-28%;
+  left:-28%;
+  width:156%;
+  height:156%;
   display:grid;
   grid-template-columns:repeat(12, 1fr);
-  gap:12px;    
-  transform:rotate(-7deg) scale(1.03);
-  opacity:0.25;
-  transition: opacity .9s ease, transform .9s ease;
-}
-.hero-grid.visible{
-  opacity:0.65;
-  transform:rotate(-7deg) scale(1);
+  gap:12px;
+
+  /* prospettiva tipo “parete” Netflix */
+  transform: perspective(1200px) rotateX(18deg) rotateZ(-8deg) scale(1.08);
+  opacity:0.22;
+
+  /* look più Netflix */
+  filter: saturate(1.15) contrast(1.05) brightness(0.82) blur(0.35px);
+
+  transition: opacity .9s ease;
+  will-change: transform;
 }
 
+.hero-grid.visible{
+  opacity:0.60;
+}
+
+/* Drift lento (tipo Netflix) */
+@keyframes wallDrift{
+  0%{
+    transform: perspective(1200px) rotateX(18deg) rotateZ(-8deg)
+      translate3d(-2%, -1.5%, 0) scale(1.08);
+  }
+  100%{
+    transform: perspective(1200px) rotateX(18deg) rotateZ(-8deg)
+      translate3d(2%, 1.5%, 0) scale(1.08);
+  }
+}
+
+/* attiva solo quando visible */
+.hero-grid.visible{
+  animation: wallDrift 26s linear infinite alternate;
+}
 
 .hero-grid img{
-  box-shadow:0 6px 18px rgba(0,0,0,0.45);
   width:100%;
-  border-radius:8px;
+  height:100%;
   object-fit:cover;
-  filter:brightness(1);
+  border-radius:10px;
+  box-shadow:0 10px 28px rgba(0,0,0,0.55);
 }
-/* Overlay scuro + vignetta */
+
+/* Overlay scuro + vignetta Netflix-style */
 .hero-overlay{
   position:absolute;
   inset:0;
   background:
-    radial-gradient(circle at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 62%),
-    linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(5,6,10,0.78));
+    radial-gradient(ellipse at center,
+      rgba(0,0,0,0.10) 0%,
+      rgba(0,0,0,0.72) 60%,
+      rgba(0,0,0,0.92) 100%
+    ),
+    linear-gradient(to top,
+      rgba(0,0,0,0.95) 0%,
+      rgba(0,0,0,0.55) 45%,
+      rgba(0,0,0,0.92) 100%
+    );
 }
 
   /* HOME */
@@ -349,24 +381,81 @@ html, body{
   outline:none;
   font-size:14px;
 }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+  gap:18px;
+  width:100%;
+  max-width:1200px;
+  grid-auto-flow:dense;
+}
 
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-    gap:18px;
-    width:100%;
-    max-width:1200px;
+/* Card base */
+.card{
+  position:relative;
+  border-radius:12px;
+  cursor:pointer;
+  overflow:hidden;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:0 10px 26px rgba(0,0,0,0.55);
+  transition:transform .15s, box-shadow .15s;
+}
+
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 16px 40px rgba(0,0,0,0.70);
+}
+
+/* Thumb con aspect ratio controllato */
+.card .thumb{
+  width:100%;
+  aspect-ratio: 2 / 3;      /* poster verticale */
+  position:relative;
+  background:#0b0f16;
+}
+
+.card.wide .thumb{
+  aspect-ratio: 16 / 9;     /* backdrop orizzontale */
+}
+
+/* immagine sempre “fill” */
+.card .thumb img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scale(1.01);
+}
+
+/* Wide = occupa 2 colonne (su desktop) */
+@media (min-width: 700px){
+  .card.wide{
+    grid-column: span 2;
   }
-  .card{
-    background:rgba(255,255,255,0.03);
-    border-radius:10px;padding:10px;color:#fff;
-    cursor:pointer;transition:transform .15s, box-shadow .15s;
-    border:1px solid rgba(255,255,255,0.04);
-  }
-  .card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 12px 30px rgba(0,0,0,0.6);
-  }
+}
+
+/* Titolo in overlay (Netflix-style) */
+.card .info{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  padding:10px 10px 10px;
+  background:linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0));
+}
+
+.card .title{
+  font-weight:800;
+  margin:0;
+  font-size:14px;
+  text-shadow:0 2px 8px rgba(0,0,0,0.9);
+}
+
+.card .meta{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,255,255,0.85);
+}
   .card img{width:100%;border-radius:8px;margin-bottom:8px}
   .title{font-weight:700;margin-bottom:6px}
   .meta{font-size:13px;color:#ddd}
@@ -1227,44 +1316,63 @@ async function addCardFor(m){
       return;
     }
 
-    // 4️⃣ Poster, categorie, anno
-    const poster   = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
-    const genreIds = item.genres ? item.genres.map(g => g.id) : item.genre_ids || [];
+// 4️⃣ Poster/backdrop + categorie + anno
+const posterUrl   = item.poster_path   ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+const backdropUrl = item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : ''; // orizzontale
 
-    const cats = [];
-    CATEGORY_DEFS.forEach(def => {
-      if (def.ids.some(id => genreIds.includes(id))) {
-        cats.push(def.key);
-      }
-    });
+// wide SOLO se backdrop nativo esiste
+const makeWide = !!backdropUrl && Math.random() < 0.18; // 18% circa (regola tu)
 
-    card.dataset.categories = JSON.stringify(cats);
-    card.dataset.tmdbId     = item.id;
-    card.dataset.type       = m.type;
+card.className = makeWide ? 'card wide' : 'card';
 
-    const year = m.type === 'movie'
-      ? (item.release_date  ? item.release_date.substring(0,4)  : '')
-      : (item.first_air_date? item.first_air_date.substring(0,4): '');
+const year = m.type === 'movie'
+  ? (item.release_date  ? item.release_date.substring(0,4)  : '')
+  : (item.first_air_date? item.first_air_date.substring(0,4): '');
 
-    // 🔒 Titolo “sicuro” per l’onclick (escape degli apostrofi)
-    const safeTitle = (m.title || "").replace(/'/g, "\\'");
+const imgUrl = makeWide ? backdropUrl : posterUrl;
 
-    card.innerHTML = `
-      ${poster ? `<img src="${poster}" alt="${item.title || item.name}">` : ''}
+// Se non ho immagine → fallback “testuale”
+if (!imgUrl){
+  card.dataset.categories = JSON.stringify([]);
+  card.innerHTML = `
+    <div style="padding:12px">
       <div class="title">${m.title}</div>
-      <div class="meta">${year}</div>
+      <div class="meta">${year || ''}</div>
+    </div>
+  `;
+  grid.appendChild(card);
+  return;
+}
 
-      ${ADMIN_MODE ? `
-        <div style="margin-top:6px; display:flex; gap:6px;">
-          ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
-           <button onclick="event.stopPropagation(); adminMarkAsSeen(normalizeTitle('${safeTitle}'))"
-                    style="padding:4px 8px; font-size:12px;">Visto</button>
-          ` : ""}
-          <button onclick="event.stopPropagation(); adminDeleteMovie(normalizeTitle('${safeTitle}'))"
-                  style="padding:4px 8px; font-size:12px; background:#b00020;">Elimina</button>
-        </div>
-      ` : ""}
-    `;
+// 🔒 titolo sicuro per onclick admin
+const safeTitle = (m.title || "").replace(/'/g, "\\'");
+
+card.innerHTML = `
+  <div class="thumb">
+    <img src="${imgUrl}" alt="${(item.title || item.name || m.title)}" loading="lazy" decoding="async">
+  </div>
+
+  <div class="info">
+    <div class="title">${m.title}</div>
+    <div class="meta">${year}</div>
+
+    ${ADMIN_MODE ? `
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+        ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
+          <button onclick="event.stopPropagation(); adminMarkAsSeen(normalizeTitle('${safeTitle}'))"
+                  style="padding:5px 10px; font-size:12px; border-radius:8px; border:none; cursor:pointer;">
+            Visto
+          </button>
+        ` : ""}
+
+        <button onclick="event.stopPropagation(); adminDeleteMovie(normalizeTitle('${safeTitle}'))"
+                style="padding:5px 10px; font-size:12px; border-radius:8px; border:none; cursor:pointer; background:#b00020; color:#fff;">
+          Elimina
+        </button>
+      </div>
+    ` : ""}
+  </div>
+`;
     card.onclick = () => showDetails(item.id, m.type);
     grid.appendChild(card);
 
@@ -1578,6 +1686,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
