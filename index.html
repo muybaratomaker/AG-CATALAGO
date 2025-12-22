@@ -1546,39 +1546,43 @@ async function renderHeroGrid() {
   if (!heroGrid) return;
 
   heroGrid.innerHTML = "";
+  
+  function applyRandomShape(tile, hasBackdrop){
+  const r = Math.random();
+
+  // ✅ wide SOLO se ho un backdrop vero
+  if (hasBackdrop && r < 0.22) tile.classList.add("tile--wide");
+  else if (r < 0.32) tile.classList.add("tile--big");
+  else if (r < 0.46) tile.classList.add("tile--tall");
+}
 
   // 📦 cache
   const cached = localStorage.getItem(CACHE_KEYS.heroGrid);
 if (cached) {
   const posters = JSON.parse(cached);
 
-  posters.forEach(p => {
-    if (typeof p === "string") p = { poster: p, backdrop: null };
+posters.forEach(p => {
+  if (typeof p === "string") p = { poster: p, backdrop: null };
 
-    const tile = document.createElement("div");
-    tile.className = "tile";
+  const tile = document.createElement("div");
+  tile.className = "tile";
 
-    // in cache puoi mantenere un po' di varietà,
-    // ma se non hai backdrop non farà i wide (giusto così)
-    const r = Math.random();
-    if (p.backdrop && r < 0.22) tile.classList.add("tile--wide");
-    else if (r < 0.30) tile.classList.add("tile--big");
-    else if (r < 0.44) tile.classList.add("tile--tall");
+  // ✅ shape intelligente
+  applyRandomShape(tile, !!p.backdrop);
 
-    const img = document.createElement("img");
-    img.loading = "lazy";
-    img.decoding = "async";
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.decoding = "async";
 
-    const path = tile.classList.contains("tile--wide")
-      ? (p.backdrop || p.poster)
-      : p.poster;
+  const isWide = tile.classList.contains("tile--wide");
+  const path   = (isWide && p.backdrop) ? p.backdrop : p.poster;
+  const size   = isWide ? "w780" : "w342";
 
-    const size = tile.classList.contains("tile--wide") ? "w500" : "w342";
-    img.src = `https://image.tmdb.org/t/p/${size}${path}`;
+  img.src = `https://image.tmdb.org/t/p/${size}${path}`;
 
-    tile.appendChild(img);
-    heroGrid.appendChild(tile);
-  });
+  tile.appendChild(img);
+  heroGrid.appendChild(tile);
+});
 
   heroGrid.classList.add("visible");
   console.log("⚡ Hero grid da cache");
@@ -1623,28 +1627,22 @@ const finalPosters = filled.slice(0, HERO_TARGET);
 
   // Renderizza le immagini nella griglia
 finalPosters.forEach(p => {
-  // compatibilità: se in cache c’era solo una stringa
   if (typeof p === "string") p = { poster: p, backdrop: null };
 
   const tile = document.createElement("div");
   tile.className = "tile";
 
-  // probabilità forme (wide solo se ho backdrop)
-  const r = Math.random();
-  if (p.backdrop && r < 0.22) tile.classList.add("tile--wide");
-  else if (r < 0.30) tile.classList.add("tile--big");
-  else if (r < 0.44) tile.classList.add("tile--tall");
+  // ✅ shape intelligente
+  applyRandomShape(tile, !!p.backdrop);
 
   const img = document.createElement("img");
   img.loading = "lazy";
   img.decoding = "async";
 
-  const path = tile.classList.contains("tile--wide")
-    ? (p.backdrop || p.poster)
-    : p.poster;
+  const isWide = tile.classList.contains("tile--wide");
+  const path   = (isWide && p.backdrop) ? p.backdrop : p.poster;
+  const size   = isWide ? "w780" : "w342";
 
-  // backdrop meglio un po' più grande
-  const size = tile.classList.contains("tile--wide") ? "w780" : "w342";
   img.src = `https://image.tmdb.org/t/p/${size}${path}`;
 
   tile.appendChild(img);
@@ -1674,6 +1672,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
