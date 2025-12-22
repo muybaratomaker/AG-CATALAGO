@@ -1590,7 +1590,7 @@ function sizeTileToImage(tile, img, colSpan){
   const width  = colSpan * colW;
   const height = width / aspect;
 
-  const rowSpan = Math.max(10, Math.ceil(height / rowPx));
+  const rowSpan = Math.max(6, Math.ceil(height / rowPx));
 
   tile.style.gridColumnEnd = `span ${colSpan}`;
   tile.style.gridRowEnd    = `span ${rowSpan}`;
@@ -1598,7 +1598,7 @@ function sizeTileToImage(tile, img, colSpan){
   tile.style.setProperty("--bg", `url('${img.src}')`);
 }
   async function renderHeroGrid() {
-  const HERO_TARGET = 80;
+  const HERO_TARGET = 160;
   const heroGrid = document.getElementById("heroGrid");
   if (!heroGrid) return;
 
@@ -1616,11 +1616,11 @@ posters.forEach(p => {
   tile.className = "tile";
 
   // ✅ se ho backdrop vero, ogni tanto uso quello (orizzontale nativo)
-  const useBackdrop = !!p.backdrop && Math.random() < 0.28;  // 28% orizzontali
+  const useBackdrop = !!p.backdrop && Math.random() < 0.22;  // meno “wide”
   const path = useBackdrop ? p.backdrop : p.poster;
 
   // colSpan diverso: orizzontali più larghi
-  const colSpan = useBackdrop ? randInt(7, 10) : randInt(2, 3);
+ const colSpan = useBackdrop ? randInt(5, 7) : randInt(2, 3);
 
   const img = document.createElement("img");
   img.loading = "lazy";
@@ -1724,6 +1724,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
