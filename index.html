@@ -76,7 +76,7 @@ html, body{
 
   /* prospettiva tipo “parete” Netflix */
   transform: perspective(1200px) rotateX(18deg) rotateZ(-8deg) scale(1.08);
-  opacity:0.22;
+  opacity:0.28;
 
   /* look più Netflix */
   filter: saturate(1.15) contrast(1.05) brightness(0.82) blur(0.35px);
@@ -86,7 +86,7 @@ html, body{
 }
 
 .hero-grid.visible{
-  opacity:0.60;
+  opacity:0.45;
 }
 
 /* Drift lento (tipo Netflix) */
@@ -120,14 +120,14 @@ html, body{
   inset:0;
   background:
     radial-gradient(ellipse at center,
-      rgba(0,0,0,0.10) 0%,
-      rgba(0,0,0,0.72) 60%,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0.65) 65%,
       rgba(0,0,0,0.92) 100%
     ),
-    linear-gradient(to top,
-      rgba(0,0,0,0.95) 0%,
-      rgba(0,0,0,0.55) 45%,
-      rgba(0,0,0,0.92) 100%
+    linear-gradient(to bottom,
+      rgba(0,0,0,0.70) 0%,
+      rgba(0,0,0,0.35) 45%,
+      rgba(0,0,0,0.85) 100%
     );
 }
 
@@ -1686,6 +1686,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
