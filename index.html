@@ -560,17 +560,17 @@
 
 /* PREVIEW ORIZZONTALE */
 .hero-preview h3{
-  margin: 0 0 18px;
+  margin: 18px 0 22px;     /* ⬅️ più staccato dall’alto */
   text-align: center;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 24px;         /* ⬅️ più grande */
+  font-weight: 650;
   color:#e6e6e6;
   letter-spacing: 0.4px;
 }
 .hero-preview{
   position:relative;               /* necessario per ::before */
   overflow:hidden;
-  margin-top: 70px;                /* aumenta se la vuoi più in basso (es. 70px) */
+  margin-top: 120px;                /* aumenta se la vuoi più in basso (es. 70px) */
   padding-bottom:40px;
   background: rgba(5,6,10,0.55);
 
@@ -619,6 +619,12 @@
 
 .hero-preview::-webkit-scrollbar{
   display: none;                /* Chrome / Safari */
+}
+  .hero-track, .hero-track *{
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
 }
 
 .hero-row{
@@ -1787,14 +1793,18 @@ if (!row.dataset.cloned) {
 
   step();
 }
-  function enableDragScroll(){
+function enableDragScroll(){
   const track = document.getElementById("heroTrack");
 
   let isDown = false;
-  let startX;
-  let scrollStart;
+  let startX = 0;
+  let scrollStart = 0;
+
+  // ✅ evita drag immagine
+  track.addEventListener("dragstart", e => e.preventDefault());
 
   track.addEventListener("mousedown", e => {
+    e.preventDefault();           // ✅ evita evidenziazione
     isDown = true;
     startX = e.pageX;
     scrollStart = track.scrollLeft;
@@ -1836,6 +1846,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
