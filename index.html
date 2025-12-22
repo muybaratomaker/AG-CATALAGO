@@ -480,46 +480,42 @@ html, body{
 .hero-center{
   position: relative;
   text-align: center;
-  margin-top: -55px;
-  margin-bottom: 44px;
 
-  max-width: 920px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 28px 26px 26px;
-  border-radius: 22px;
+  max-width: 980px;            /* prima 920 */
+  margin: -60px auto 52px;     /* un pelo più “importante” */
+  padding: 36px 34px 30px;     /* prima 28/26/26 */
+  border-radius: 26px;
 
-  background: radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0) 70%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 18px 55px rgba(0,0,0,0.35);
+  background: radial-gradient(circle at center, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0) 72%);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.38);
 }
 
 .hero-center h1{
-  font-size: clamp(52px, 6.2vw, 86px);
+  font-size: clamp(58px, 6.6vw, 92px);  /* un pelo più grande */
   line-height: 0.98;
-  margin: 0 0 12px;
-  letter-spacing: 1px;
-  text-shadow: 0 6px 30px rgba(0,0,0,0.85);
+  margin: 0 0 14px;
 }
 
 .hero-sub{
-  font-size: clamp(18px, 2.2vw, 24px);
-  max-width: 760px;
-  margin: 0 auto 30px;
-  color:#d6dde6;
-  opacity: 0.96;
+  font-size: clamp(19px, 2.35vw, 26px);
+  max-width: 820px;            /* più respiro */
+  margin: 0 auto 28px;
 }
 
 /* bottoni */
 .hero-center .buttons{
-  position: relative;
-  display: inline-flex;
+  display: flex;              /* invece di inline-flex */
   justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
   z-index: 1;
+  margin-bottom: 18px;        /* spazio prima di +Aggiungi */
 }
 
-/* aura sotto */
+/* aura resta uguale, ma agganciala alla riga bottoni */
 .hero-center .buttons::after{
   content:"";
   position:absolute;
@@ -528,6 +524,7 @@ html, body{
   transform:translateX(-50%);
   width: min(560px, 92vw);
   height: 84px;
+
   background:
     radial-gradient(ellipse at center,
       rgba(126,87,194,0.45) 0%,
@@ -539,10 +536,28 @@ html, body{
       rgba(0,0,0,0.25) 55%,
       rgba(0,0,0,0.0) 100%
     );
+
   filter: blur(10px);
   opacity: 0.9;
   pointer-events: none;
   z-index: 0;
+}
+
+/* bottone admin sotto, più “secondario” */
+.btn-admin{
+  display: inline-flex;
+  margin: 6px auto 0;
+  background: rgba(33,150,243,0.14);
+  border-color: rgba(33,150,243,0.32);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+.btn-admin:hover{
+  background: rgba(33,150,243,0.22);
+  border-color: rgba(33,150,243,0.48);
+}
+  .hero-center > .btn-admin{
+  position: relative;
+  z-index: 2;
 }
 
 @media (max-width: 600px){
@@ -558,34 +573,29 @@ html, body{
 <div id="hero-loader"></div>
 <div class="bg" aria-hidden="true"></div>
 
-<!-- HOME -->
 <section id="home">
-  <!-- HERO BACKGROUND -->
-<div class="hero-bg">
-  <div class="hero-grid" id="heroGrid"></div>
-  <div class="hero-overlay"></div>
-</div>
-<div class="hero-content">
-  <!-- BLOCCO CENTRALE -->
-  <div class="hero-center">
-    <h1>Catalogo AG</h1>
-    <p class="hero-sub">
-      La nostra collezione di film e serie visti dal 2020
-    </p>
+  <div class="hero-bg">
+    <div class="hero-grid" id="heroGrid"></div>
+    <div class="hero-overlay"></div>
+  </div>
 
-    <div class="buttons">
-      <button class="btn" onclick="openCatalog('movie')">Film</button>
-      <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
-      <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
+  <div class="hero-content">
+    <div class="hero-center">
+      <h1>Catalogo AG</h1>
+      <p class="hero-sub">La nostra collezione di film e serie visti dal 2020</p>
 
-      <button class="btn" id="adminAddBtn" style="display:none;" onclick="openAddForm()">
+      <div class="buttons">
+        <button class="btn" onclick="openCatalog('movie')">Film</button>
+        <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
+        <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
+      </div>
+
+      <button class="btn btn-admin" id="adminAddBtn" style="display:none;" onclick="openAddForm()">
         + Aggiungi
       </button>
     </div>
   </div>
-</div>
 </section>
-
 <!-- CATALOGO -->
 <section id="catalog">
   <div style="display:flex;flex-direction:column;align-items:center">
@@ -1568,6 +1578,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
