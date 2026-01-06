@@ -647,6 +647,10 @@ html, body{
   border-color: rgba(33,150,243,0.32);
   box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
+.admin-row{
+  display: flex;
+  justify-content: center;
+}
 .btn-admin:hover{
   background: rgba(33,150,243,0.22);
   border-color: rgba(33,150,243,0.48);
@@ -685,10 +689,11 @@ html, body{
         <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
         <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
       </div>
-
+      <div class="admin-row">
       <button class="btn btn-admin" id="adminAddBtn" style="display:none;" onclick="openAddForm()">
         + Aggiungi
       </button>
+      </div>
     </div>
   </div>
 </section>
@@ -1724,6 +1729,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
