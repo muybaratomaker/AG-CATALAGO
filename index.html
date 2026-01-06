@@ -260,13 +260,6 @@ html, body{
   background: rgba(33,150,243,0.18);
   border-color: rgba(33,150,243,0.35);
 }
-  .actions{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
 #adminAddBtn:hover{
   background: rgba(33,150,243,0.26);
   border-color: rgba(33,150,243,0.50);
@@ -644,7 +637,18 @@ html, body{
   pointer-events: none;
   z-index: 0;
 }
+.buttons{
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
 
+.serie-wrapper{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
 /* bottone admin sotto, più “secondario” */
 .btn-admin{
   display: inline-flex;
@@ -690,19 +694,20 @@ html, body{
       <h1>Catalogo AG</h1>
       <p class="hero-sub">La nostra collezione di film e serie visti dal 2020</p>
 
-<div class="actions">
-  <div class="buttons">
-    <button class="btn" onclick="openCatalog('movie')">Film</button>
-    <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
-    <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
-  </div>
+<div class="buttons">
+  <button class="btn" onclick="openCatalog('movie')">Film</button>
 
-  <button class="btn btn-admin"
-          id="adminAddBtn"
-          style="display:none;"
-          onclick="openAddForm()">
-    + Aggiungi
-  </button>
+  <div class="serie-wrapper">
+    <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
+
+    <button class="btn btn-admin"
+            id="adminAddBtn"
+            style="display:none;"
+            onclick="openAddForm()">
+      + Aggiungi
+    </button>
+  </div>
+  <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
 </div>
     </div>
   </div>
@@ -1739,6 +1744,7 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
+
 
 
 
