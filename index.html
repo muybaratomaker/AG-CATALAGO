@@ -661,8 +661,6 @@ html, body{
 .admin-row{
   display: flex;
   justify-content: center;
-  width: 100%;
-  margin-top: 14px;
 }
 .btn-admin:hover{
   background: rgba(33,150,243,0.22);
@@ -697,19 +695,21 @@ html, body{
       <h1>Catalogo AG</h1>
       <p class="hero-sub">La nostra collezione di film e serie visti dal 2020</p>
 
-<div class="buttons">
-  <button class="btn" onclick="openCatalog('movie')">Film</button>
-  <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
-  <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
-</div>
+<div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+  
+  <div style="display:flex; gap:16px;">
+    <button class="btn" onclick="openCatalog('movie')">Film</button>
+    <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
+    <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
+  </div>
 
-<div class="admin-row">
   <button class="btn btn-admin"
           id="adminAddBtn"
           style="display:none;"
           onclick="openAddForm()">
     + Aggiungi
   </button>
+
 </div>
     </div>
   </div>
