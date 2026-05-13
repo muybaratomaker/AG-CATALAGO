@@ -697,18 +697,17 @@ html, body{
 
 <div class="buttons">
   <button class="btn" onclick="openCatalog('movie')">Film</button>
-
-  <div class="serie-wrapper">
-    <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
-
-    <button class="btn btn-admin"
-            id="adminAddBtn"
-            style="display:none;"
-            onclick="openAddForm()">
-      + Aggiungi
-    </button>
-  </div>
+  <button class="btn" onclick="openCatalog('tv')">Serie TV</button>
   <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
+</div>
+
+<div class="admin-row">
+  <button class="btn btn-admin"
+          id="adminAddBtn"
+          style="display:none;"
+          onclick="openAddForm()">
+    + Aggiungi
+  </button>
 </div>
     </div>
   </div>
