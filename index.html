@@ -1288,10 +1288,13 @@ async function renderGrid(type){
     })
     .sort((a,b) => a.title.localeCompare(b.title,'it',{sensitivity:'base'}));
 
-  for(const m of list){
-    if (q && !m.title.toLowerCase().includes(q)) continue;
-    await addCardFor(m);
-  }
+ const filtered = list.filter(m => !q || m.title.toLowerCase().includes(q));
+
+const BATCH_SIZE = 10;
+for (let i = 0; i < filtered.length; i += BATCH_SIZE) {
+  const batch = filtered.slice(i, i + BATCH_SIZE);
+  await Promise.all(batch.map(m => addCardFor(m)));
+}
 
   renderCategoryFilters();
   filterGrid();
