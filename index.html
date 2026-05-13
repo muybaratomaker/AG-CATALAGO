@@ -214,20 +214,6 @@ html, body{
   color:#b0bec5;
   opacity:0.85;
 }
-#home .buttons{
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-/* desktop: una riga sola */
-@media (min-width: 901px){
-  #home .buttons{
-    flex-wrap:nowrap;
-  }
-}
-
 .btn{
   padding: 14px 26px;
   border-radius: 999px;
@@ -637,13 +623,6 @@ html, body{
   pointer-events: none;
   z-index: 0;
 }
-.buttons{
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* ← QUESTA È LA CHIAVE */
-  gap: 12px;
-}
-
 .serie-wrapper{
   display: flex;
   flex-direction: column;
