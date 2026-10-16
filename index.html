@@ -723,6 +723,23 @@ html, body{
     <div class="cast" id="modalCast"></div>
   </div>
 </div>
+<!-- Accesso con modulo compatibile con i gestori di password -->
+<div id="loginModal" class="modal" style="display:none" onclick="if(event.target===this) closeLoginModal()">
+  <div class="inner" role="dialog" aria-modal="true" aria-labelledby="loginTitle" style="max-width:420px">
+    <button type="button" class="close" onclick="closeLoginModal()" aria-label="Chiudi">&times;</button>
+    <h2 id="loginTitle">Accesso amministratore</h2>
+    <form id="adminLoginForm" autocomplete="on" onsubmit="submitLoginForm(event)">
+      <label for="loginUsername">Account</label>
+      <input id="loginUsername" name="username" autocomplete="username" value="admin" readonly
+             style="display:block;width:100%;padding:10px;margin:7px 0 14px;border-radius:7px;border:1px solid #526070;background:#1d2934;color:white">
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" required
+             style="display:block;width:100%;padding:10px;margin:7px 0 14px;border-radius:7px;border:1px solid #526070;background:#fff;color:#111">
+      <p id="loginError" role="alert" style="color:#ffb4ab;min-height:1.4em"></p>
+      <button id="loginSubmit" type="submit" class="btn" style="width:100%">Accedi</button>
+    </form>
+  </div>
+</div>
 <div id="addModal" class="modal" style="display:none;" onclick="if(event.target===this) closeAddModal()">
   <div class="inner" style="max-width:500px;">
     <div class="close" onclick="closeAddModal()">&times;</div>
@@ -770,29 +787,68 @@ function updateAdminUI() {
   const loggedIn = isAdmin();
   document.getElementById("adminLogoutBtn").style.display = loggedIn ? "block" : "none";
 }
-async function loginFromSite() {
+let loginResolve = null;
+function loginFromSite() {
+  if (isAdmin()) return Promise.resolve(true);
+  if (loginResolve) return Promise.resolve(false);
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginModal').style.display = 'flex';
+  requestAnimationFrame(() => document.getElementById('loginPassword').focus());
+  return new Promise(resolve => { loginResolve = resolve; });
+}
+function closeLoginModal() {
+  // Non interrompere una richiesta di autenticazione in corso.
   if (adminBusy) return;
-  const password = prompt("Password amministratore Cloudflare:");
-  if (password === null) return;
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('loginPassword').value = '';
+  const resolve = loginResolve;
+  loginResolve = null;
+  if (resolve) resolve(false);
+}
+async function submitLoginForm(event) {
+  event.preventDefault();
+  if (adminBusy) return;
+  const passwordInput = document.getElementById('loginPassword');
+  const error = document.getElementById('loginError');
+  const submit = document.getElementById('loginSubmit');
+  const password = passwordInput.value;
+  if (!password) return;
   adminBusy = true;
+  submit.disabled = true;
+  error.textContent = '';
+  let successful = false;
   try {
-    const response = await fetch(WORKER_BASE + "/login", {
-      method: "POST", headers: {"Content-Type": "application/json"},
+    const response = await fetch(WORKER_BASE + '/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({password})
     });
     const result = await response.json();
     if (!response.ok || !result.success || !result.token) {
-      alert(result.error === "TOO_MANY_REQUESTS" ? "Troppi tentativi. Attendi un minuto." : "Accesso non riuscito.");
+      error.textContent = result.error === 'TOO_MANY_REQUESTS'
+        ? 'Troppi tentativi. Attendi un minuto.'
+        : 'Password non corretta. Riprova.';
       return;
     }
     adminToken = result.token;
     adminExpiresAt = Date.now() + Math.min(Number(result.expiresIn) || 1800, 1800) * 1000;
     updateAdminUI();
+    successful = true;
+    document.getElementById('loginModal').style.display = 'none';
     if (currentCatalogType) await renderGrid(currentCatalogType);
-  } catch (e) {
-    alert("Errore di collegamento al login Cloudflare.");
+  } catch {
+    error.textContent = 'Impossibile accedere. Controlla la connessione.';
   } finally {
     adminBusy = false;
+    submit.disabled = false;
+    if (successful) {
+      // La password non viene archiviata dal sito: il browser può proporre di salvarla.
+      const resolve = loginResolve;
+      loginResolve = null;
+      if (resolve) resolve(true);
+      passwordInput.value = '';
+    }
   }
 }
 async function logoutFromSite() {
