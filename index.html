@@ -676,17 +676,14 @@ html, body{
     <button class="btn" onclick="openCatalog('todo')">Da vedere</button>
     <button class="btn btn-admin"
           id="adminAddBtn"
-          style="display:none;"
           onclick="openAddForm()">
     +
   </button>
 
 </div>
     <div style="display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;">
-      <button class="btn btn-admin" id="adminLoginBtn" onclick="loginFromSite()">Accesso amministratore</button>
       <button class="btn btn-admin" id="adminLogoutBtn" style="display:none" onclick="logoutFromSite()">Esci</button>
     </div>
-    <p id="adminStatus" style="font-size:12px; color:#b0bec5; margin-top:10px;"></p>
     </div>
   </div>
 </section>
@@ -771,12 +768,7 @@ let adminBusy = false;
 const isAdmin = () => Boolean(adminToken && Date.now() < adminExpiresAt);
 function updateAdminUI() {
   const loggedIn = isAdmin();
-  document.getElementById("adminAddBtn").style.display = loggedIn ? "block" : "none";
-  document.getElementById("adminLoginBtn").style.display = loggedIn ? "none" : "block";
   document.getElementById("adminLogoutBtn").style.display = loggedIn ? "block" : "none";
-  document.getElementById("adminStatus").textContent = loggedIn
-    ? "Accesso amministratore attivo."
-    : "";
 }
 async function loginFromSite() {
   if (adminBusy) return;
@@ -797,7 +789,6 @@ async function loginFromSite() {
     adminExpiresAt = Date.now() + Math.min(Number(result.expiresIn) || 1800, 1800) * 1000;
     updateAdminUI();
     if (currentCatalogType) await renderGrid(currentCatalogType);
-    alert("Accesso amministratore riuscito.");
   } catch (e) {
     alert("Errore di collegamento al login Cloudflare.");
   } finally {
@@ -1260,8 +1251,10 @@ async function runMovieAction(movie, action) {
   } finally { adminBusy = false; }
 }
 
-function openAddForm() {
-  if (!isAdmin()) { updateAdminUI(); return alert('Effettua prima l’accesso amministratore.'); }
+async function openAddForm() {
+  // Il + è sempre visibile: chiede il login solo quando necessario.
+  if (!isAdmin()) await loginFromSite();
+  if (!isAdmin()) return; // Password errata o accesso annullato.
   document.getElementById('addModal').style.display = 'flex';
 }
 function closeAddModal() {
