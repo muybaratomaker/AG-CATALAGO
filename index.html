@@ -682,6 +682,11 @@ html, body{
   </button>
 
 </div>
+    <div style="display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;">
+      <button class="btn btn-admin" id="adminLoginBtn" onclick="loginFromSite()">Accesso amministratore</button>
+      <button class="btn btn-admin" id="adminLogoutBtn" style="display:none" onclick="logoutFromSite()">Esci</button>
+    </div>
+    <p id="adminStatus" style="font-size:12px; color:#b0bec5; margin-top:10px;"></p>
     </div>
   </div>
 </section>
@@ -705,6 +710,7 @@ html, body{
     </div>
 
 </div>
+    <p id="catalogNotice" role="status" style="color:#ffcc80;text-align:center;max-width:700px;"></p>
     <div class="grid" id="grid"></div>
     <div id="catalog-footer"></div>
   </div>
@@ -739,10 +745,10 @@ html, body{
 
     <label style="display:flex; align-items:center; gap:6px;">
       <input type="checkbox" id="addTodo">
-      Inserisci tra i "Film da vedere"
+      Inserisci tra i titoli "Da vedere"
     </label>
 
-    <button onclick="submitAddForm()" style="margin-top:12px; width:100%; padding:10px; border-radius:8px; cursor:pointer;">
+    <button id="submitAddBtn" onclick="submitAddForm()" style="margin-top:12px; width:100%; padding:10px; border-radius:8px; cursor:pointer;">
       Aggiungi al catalogo
     </button>
   </div>
@@ -757,18 +763,57 @@ const CACHE_KEYS = {
   time:    "CATALOG_CACHE_TIME"
 };
 const API_KEY  = '9298687fa5e1f883f34db8ce4844c806';
-// --- Modalità Admin ---
-const urlParams = new URLSearchParams(window.location.search);
-const adminKey = urlParams.get("admin");
-
-// metti qui la tua secret
-const ADMIN_SECRET = "ag_secret_928374";
-
-// se true → sei in modalità admin
-const ADMIN_MODE = (adminKey === ADMIN_SECRET);
-
-console.log("Admin mode:", ADMIN_MODE);
-if (ADMIN_MODE) document.getElementById("adminAddBtn").style.display = "block";
+// --- Autenticazione Cloudflare: nessun segreto nel codice pubblico ---
+const WORKER_BASE = "https://catalogo-ag-api.joshgeogr.workers.dev";
+let adminToken = null;
+let adminExpiresAt = 0;
+let adminBusy = false;
+const isAdmin = () => Boolean(adminToken && Date.now() < adminExpiresAt);
+function updateAdminUI() {
+  const loggedIn = isAdmin();
+  document.getElementById("adminAddBtn").style.display = loggedIn ? "block" : "none";
+  document.getElementById("adminLoginBtn").style.display = loggedIn ? "none" : "block";
+  document.getElementById("adminLogoutBtn").style.display = loggedIn ? "block" : "none";
+  document.getElementById("adminStatus").textContent = loggedIn
+    ? "Accesso amministratore attivo."
+    : "";
+}
+async function loginFromSite() {
+  if (adminBusy) return;
+  const password = prompt("Password amministratore Cloudflare:");
+  if (password === null) return;
+  adminBusy = true;
+  try {
+    const response = await fetch(WORKER_BASE + "/login", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({password})
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success || !result.token) {
+      alert(result.error === "TOO_MANY_REQUESTS" ? "Troppi tentativi. Attendi un minuto." : "Accesso non riuscito.");
+      return;
+    }
+    adminToken = result.token;
+    adminExpiresAt = Date.now() + Math.min(Number(result.expiresIn) || 1800, 1800) * 1000;
+    updateAdminUI();
+    if (currentCatalogType) await renderGrid(currentCatalogType);
+    alert("Accesso amministratore riuscito.");
+  } catch (e) {
+    alert("Errore di collegamento al login Cloudflare.");
+  } finally {
+    adminBusy = false;
+  }
+}
+async function logoutFromSite() {
+  const token = adminToken;
+  adminToken = null;
+  adminExpiresAt = 0;
+  updateAdminUI();
+  if (currentCatalogType) await renderGrid(currentCatalogType);
+  if (!token) return;
+  try { await fetch(WORKER_BASE + "/logout", {method: "POST", headers: {Authorization: "Bearer " + token}}); }
+  catch(e) { /* La sessione locale è stata comunque chiusa. */ }
+}
 const API_BASE = 'https://api.themoviedb.org/3';
 /* Categorie manuali basate sui generi TMDb */
 const CATEGORY_DEFS = [
@@ -797,315 +842,9 @@ const catalogTitle = document.getElementById('catalog-title');
 document.getElementById('closeBtn').onclick = closeModal;
 
 /* LISTA COMPLETA FILM / SERIE */
-const movies = [
+// I film e le serie TV sono conservati esclusivamente su Google Sheets.
+const movies = [];
 
-  // ============================
-  // ADAM SANDLER
-  // ============================
-  { title:'Un weekend da bamboccioni', type:'movie' },
-  { title:'Un weekend da bamboccioni 2', type:'movie' },
-  { title:'Mia moglie per finta', type:'movie' },
-  { title:'Murder Mystery', type:'movie' },
-  { title:'Murder Mystery 2', type:'movie' },
-  { title:'Hustle', type:'movie' },
-  { title:'Pixels', type:'movie', id:257344 },
-  { title:'Cambia la tua vita con un click', type:'movie' },
-  { title:'Matrimonio a Long Island', type:'movie' },
-  { title:'Mr. Cobbler e la bottega magica', type:'movie' },
-  { title:'L’altra sporca ultima meta', type:'movie', search:'The Longest Yard' },
-  { title:'Terapia d’urto', type:'movie', search:'Anger Management' },
-  { title:'The Do Over', type:'movie' },
-
-  // ============================
-  // BRADLEY COOPER
-  // ============================
-  { title:'Il sapore del successo', type:'movie', search:'Burnt' },
-  { title:'American Sniper', type:'movie' },
-  { title:'Limitless', type:'movie' },
-  { title:'Una notte da leoni', type:'movie', id:18785 },
-  { title:'Una notte da leoni 2', type:'movie', id:45243 },
-  { title:'Una notte da leoni 3', type:'movie', id:109439 },
-
-  // ============================
-  // JASON STATHAM
-  // ============================
-  { title:'Operation Fortune', type:'movie', search:'Operation Fortune: Ruse de Guerre' },
-  { title:'Hobbs & Shaw', type:'movie', search:'Fast & Furious Presents: Hobbs & Shaw' },
-  { title:'Fast X', type:'movie' },
-  { title:'Tokyo Drift', type:'movie', search:'The Fast and the Furious: Tokyo Drift' },
-  { title:'Homefront', type:'movie' },
-  { title:'Wild Card', type:'movie' },
-  { title:'Crank', type:'movie' },
-
-  // ============================
-  // DANIEL CRAIG
-  // ============================
-  { title:'007 - Skyfall', type:'movie', search:'Skyfall' },
-  { title:'007 - Casino Royale', type:'movie', search:'Casino Royale 2006' },
-  { title:'Glass Onion', type:'movie', search:'Glass Onion: A Knives Out Mystery' },
-  { title:'Cena con delitto', type:'movie', search:'Knives Out' },
-
-  // ============================
-  // RYAN REYNOLDS
-  // ============================
-  { title:'The Adam Project', type:'movie' },
-  { title:'Deadpool', type:'movie' },
-  { title:'Deadpool 2', type:'movie' },
-  { title:'Free Guy', type:'movie' },
-  { title:'Red Notice', type:'movie' },
-  { title:"Come ti ammazzo il bodyguard", type:'movie', search:"The Hitman's Bodyguard" },
-
-  // ============================
-  // BRAD PITT
-  // ============================
-  { title:'Mr. & Mrs. Smith', type:'movie' },
-  { title:'Bullet Train', type:'movie' },
-  { title:'Fight Club', type:'movie' },
-  { title:'Il curioso caso di Benjamin Button', type:'movie' },
-
-  // ============================
-  // LEONARDO DICAPRIO
-  // ============================
-  { title:"Don't Look Up", type:'movie' },
-  { title:'Shutter Island', type:'movie' },
-  { title:'The Wolf of Wall Street', type:'movie' },
-  { title:'Prova a prendermi', type:'movie', search:'Catch Me If You Can' },
-
-  // ============================
-  // MARGOT ROBBIE
-  // ============================
-  { title:'Babylon', type:'movie' },
-  { title:'Suicide Squad', type:'movie' },
-  { title:'Barbie', type:'movie' },
-  { title:'Focus', type:'movie' },
-
-  // ============================
-  // WILL SMITH
-  // ============================
-  { title:'La ricerca della felicità', type:'movie', search:'The Pursuit of Happyness' },
-  { title:'Bad Boys', type:'movie' },
-  { title:'Men in Black', type:'movie', id:607 },
-  { title:'Aladdin (live-action)', type:'movie', search:'Aladdin 2019' },
-
-  // ============================
-  // HARRY POTTER SAGA
-  // ============================
-  { title:'Harry Potter e la pietra filosofale', type:'movie' },
-  { title:'Harry Potter e la camera dei segreti', type:'movie' },
-  { title:'Harry Potter e il prigioniero di Azkaban', type:'movie' },
-  { title:'Harry Potter e il calice di fuoco', type:'movie' },
-  { title:'Harry Potter e l’Ordine della Fenice', type:'movie' },
-  { title:'Harry Potter e il Principe Mezzosangue', type:'movie' },
-  { title:'Harry Potter e i Doni della Morte - Parte 1', type:'movie' },
-  { title:'Harry Potter e i Doni della Morte - Parte 2', type:'movie' },
-
-  // ============================
-  // COMICI / ITALIANI
-  // ============================
-  { title:'Sole a catinelle', type:'movie' },
-  { title:'Che bella giornata', type:'movie' },
-  { title:'Quo Vado?', type:'movie' },
-  { title:'Odio l’estate', type:'movie', id:606954 },
-  { title:'Principe abusivo', type:'movie' },
-  { title:'Chi ha incastrato Babbo Natale?', type:'movie' },
-  { title:'Una festa esagerata', type:'movie' },
-  { title:'Finalmente la felicità', type:'movie' },
-  { title:'Ma che bella sorpresa', type:'movie' },
-  { title:'Johnny Stecchino', type:'movie' },
-
-  // ============================
-  // VARI
-  // ============================
-  { title:'The Hunger Games', type:'movie', search:'The Hunger Games' },
-  { title:'Hunger Games la ragazza di fuoco', type:'movie', search:'Hunger Games: La ragazza di fuoco' },
-  { title:'Hunger Games Il canto della rivolta - parte 1', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 1' },
-  { title:'Hunger Games il canto della rivolta - parte 2 ', type:'movie', search:'Hunger Games: Il canto della rivolta - Parte 2' },
-  { title:'Hunger Games La ballata dell usignolo e del serpente', type:'movie', search:'Hunger Games: La ballata dell usignolo e del serpente' },
-  { title:'Pirati dei Caraibi 1', type:'movie', search:'Pirates of the Caribbean The Curse of the Black Pearl' },
-  { title:'Pirati dei Caraibi 2', type:'movie', search:'Pirates of the Caribbean Dead Man\'s Chest' },
-  { title:'Alice in Wonderland', type:'movie', search:'Alice in Wonderland 2010' },
-  { title:'The Truman Show', type:'movie' },
-  { title:'The Menu', type:'movie' },
-  { title:'Pretty Woman', type:'movie', id:114 },
-  { title:'Il diavolo veste Prada', type:'movie', id:350 },
-  { title:'Quasi amici', type:'movie', search:'Intouchables' },
-  { title:'Matrix', type:'movie', id:603},
-  { title:'Rocky', type:'movie', id:1366},
-  { title:'Il buco', type:'movie', search:'The Platform 2019' },
-  { title:'Noi', type:'movie', search:'Us 2019' },
-  { title:'Avatar', type:'movie' },
-  { title:'Avatar: La via dell’acqua', type:'movie', search:'Avatar The Way of Water' },
-  { title:'21', type:'movie' },
-  { title:'Come ti ammazzo il capo', type:'movie', search:'Horrible Bosses' },
-  { title:'Runner Runner', type:'movie', search:'Runner Runner (2013)' },
-  { title:'Parasite', type:'movie', search:'Parasite 기생충' },
-  { title:'Adaline - L’eterna giovinezza', type:'movie', search:'The Age of Adaline' },
-  { title:'La grande scommessa', type:'movie', search:'The Big Short' },
-  { title:'Un poliziotto in prova', type:'movie', search:'Ride Along' },
-  { title:'Un poliziotto in prova 2', type:'movie', search:'Ride Along 2' },
-  { title:'Piacere Dave', type:'movie', search:'Meet Dave' },
-  { title:'Una spia e mezzo', type:'movie', search:'Central Intelligence' },
-  { title:'Escape Plan', type:'movie' },
-  { title:'Next', type:'movie' },
-  { title:'Halloween Ends', type:'movie' },
-  { title:'Beast', type:'movie', search:'Beast 2022 Idris Elba' },
-  { title:'Air', type:'movie', search:'Air La storia del grande salto' },
-  { title:'Adidas vs Puma', type:'movie', search:"Adidas vs. Puma: The Brother's Feud" },
-  { title:'The Whale', type:'movie' },
-  { title:'Everything Everywhere All at Once', type:'movie' },
-  { title:'Masterminds', type:'movie' },
-  { title:'Insospettabili sospetti', type:'movie', id:353070 },
-  { title:'Now You See Me', type:'movie', id:75656 },
-  { title:'Now You See Me 2', type:'movie' },
-  { title:'L’illusione perfetta - Now You See Me: Now You Don’t', type:'movie', search:'Now You See Me 3' },
-  { title:'Richie Rich', type:'movie', search:'Ri¢hie Ri¢h' },
-  { title:'Il silenzio degli innocenti', type:'movie', search:'The Silence of the Lambs' },
-  { title:'Jobs', type:'movie', search:'Jobs' },
-  { title:'La piccola Boss', type:'movie', id:526050 },
-  { title:'Game Night', type:'movie' },
-  { title:'Split', type:'movie' },
-  { title:'The Meg', type:'movie' },
-  { title:'Five Nights at Freddy’s', type:'movie', id:507089 },
-  { title:'Mamma ho perso l’aereo', type:'movie', id:771 },
-  { title:'Mamma ho perso l’aereo 2', type:'movie', search:'Home Alone 2' },
-  { title:'Knock Knock', type:'movie' },
-  { title:'M3GAN', type:'movie' },
-  { title:'Donnie Darko', type:'movie' },
-  { title:'Saw - L’eredità', type:'movie', id:602734 },
-  { title:'21 Jump Street', type:'movie' },
-  { title:'You People', type:'movie' },
-  { title:'American Psycho', type:'movie' },
-  { title:'Countdown', type:'movie' },
-  { title:'Top Gun: Maverick', type:'movie' },
-  { title:'57 Seconds', type:'movie' },
-  { title:'Gran Turismo', type:'movie' },
-  { title:'I Fantastici 4', type:'movie', search:'Fantastic Four' },
-  { title:'Inception', type:'movie' },
-  { title:'Nonno scatenato', type:'movie', search:'Dirty Grandpa' },
-  { title:'One Hour Photo', type:'movie' },
-  { title:'Superhero Movie', type:'movie' },
-  { title:'Ocean’s 8', type:'movie' },
-  { title:'What Men Want', type:'movie' },
-  { title:'Idiocracy', type:'movie' },
-  { title:'Operazione vendetta', type:'movie', search:'The Amateur' },
-  { title:'John Wick', type:'movie', id:245891 },
-  { title:'John Wick 2', type:'movie' },
-  { title:'Predator: Badlands', type:'movie', id:1242898 },
-  { title:'Family Switch', type:'movie' },
-
-  // ============================
-  // CARTONI / ANIMAZIONE
-  // ============================
-  { title:'Shrek', type:'movie' },
-  { title:'Shrek 2', type:'movie' },
-  { title:'Shrek e vissero felici e contenti', type:'movie', search:'Shrek Forever After' },
-  { title:'Madagascar', type:'movie' },
-  { title:'Madagascar 2', type:'movie', search:'Madagascar Escape 2 Africa' },
-  { title:'Luca', type:'movie' },
-  { title:'La strada per El Dorado', type:'movie', search:'The Road to El Dorado' },
-  { title:'Coco', type:'movie' },
-  { title:'Alla ricerca di Nemo', type:'movie', search:'Finding Nemo' },
-  { title:'Toy Story', type:'movie' },
-  { title:'Lilo & Stitch', type:'movie' },
-  { title:'Lilo & Stitch 2', type:'movie' },
-  { title:'Chicken Little', type:'movie' },
-  { title:'Ratatouille', type:'movie' },
-  { title:'Dragon Trainer', type:'movie', search:'How to Train Your Dragon' },
-  { title:'Dragon Trainer 2', type:'movie', search:'How to Train Your Dragon 2' },
-  { title:'Monster & Co', type:'movie', search:'Monsters Inc' },
-  { title:'Mostri contro alieni', type:'movie' },
-  { title:'Gli Incredibili', type:'movie', search:'The Incredibles' },
-  { title:'Gli Incredibili 2', type:'movie' },
-  { title:'Super Mario Bros', type:'movie', search:'The Super Mario Bros Movie' },
-  { title:'Inside Out', type:'movie' },
-  { title:'Inside Out 2', type:'movie' },
-  { title:'Up', type:'movie', id:14160},
-  { title:'Kung Fu Panda', type:'movie' },
-  { title:'Kung Fu Panda 2', type:'movie' },
-  { title:'Kung Fu Panda 3', type:'movie' },
-  { title:'Kung Fu Panda 4', type:'movie' },
-  { title:'Bolt', type:'movie' },
-  { title:'Uno zoo in fuga', type:'movie', id:9904 },
-  { title:'Hercules', type:'movie', search:'Hercules' },
-  { title:'Il pianeta del tesoro', type:'movie' },
-  { title:'Frozen', type:'movie', search:'Frozen - Il regno di ghiaccio' },
-  { title:'La bella e la bestia', type:'movie', search:'Beauty and the Beast 1991' },
-  { title:'Biancaneve', type:'movie', search:'Snow White and the Seven Dwarfs' },
-  { title:'La bella addormentata nel bosco', type:'movie', id:10882 },
-  { title:'Rapunzel', type:'movie', search:'Tangled' },
-
-  // ============================
-  // MCU + SPIDER-MAN
-  // ============================
-  { title:'Iron Man', type:'movie' },
-  { title:'L’Incredibile Hulk', type:'movie' },
-  { title:'Iron Man 2', type:'movie' },
-  { title:'Thor', type:'movie' },
-  { title:'Captain America: Il Primo Vendicatore', type:'movie', search:'Captain America The First Avenger' },
-  { title:'The Avengers', type:'movie' },
-  { title:'Iron Man 3', type:'movie' },
-  { title:'Thor: The Dark World', type:'movie' },
-  { title:'Captain America: The Winter Soldier', type:'movie' },
-  { title:'Guardiani della Galassia', type:'movie', id:118340 },
-  { title:'Avengers: Age of Ultron', type:'movie' },
-  { title:'Ant-Man', type:'movie' },
-  { title:'Captain America: Civil War', type:'movie' },
-  { title:'Doctor Strange', type:'movie' },
-  { title:'Guardiani della Galassia Vol. 2', type:'movie' },
-  { title:'Spider-Man: Homecoming', type:'movie' },
-  { title:'Thor: Ragnarok', type:'movie' },
-  { title:'Black Panther', type:'movie', search:'Black Panther 2018' },
-  { title:'Ant-Man and the Wasp', type:'movie' },
-  { title:'Avengers: Infinity War', type:'movie' },
-  { title:'Captain Marvel', type:'movie' },
-  { title:'Avengers: Endgame', type:'movie' },
-  { title:'Spider-Man: Far From Home', type:'movie' },
-  { title:'Deadpool e Wolverine', type:'movie' },
-  { title:'Spider-Man: No Way Home', type:'movie' },
-
-  // Tobey Maguire Trilogy
-  { title:'Spider-Man', type:'movie', search:'Spider-Man 2002' },
-  { title:'Spider-Man 2', type:'movie', search:'Spider-Man 2 2004' },
-  { title:'Spider-Man 3', type:'movie', id:559 },
-
-  // ============================
-  // SERIE TV
-  // ============================
-  { title:'La casa di carta', type:'tv', search:'Money Heist' },
-  { title:'Jessica Jones', type:'tv' },
-  { title:'Stranger Things', type:'tv' },
-  { title:'Lucifer', type:'tv' },
-  { title:'The Defenders', type:'tv', id:62285 },
-  { title:'Lupin', type:'tv' },
-  { title:'The Crown', type:'tv' },
-  { title:'The Boys', type:'tv' },
-  { title:'Caleidoscopio', type:'tv', search:'Kaleidoscope' },
-  { title:'Dahmer', type:'tv', search:'Dahmer - Monster: The Jeffrey Dahmer Story' },
-  { title:'Mercoledì', type:'tv', search:'Wednesday' },
-  { title:'Sneaky Pete', type:'tv' },
-  { title:'Mr. Robot', type:'tv' },
-  { title:'Alice in Borderland', type:'tv' },
-  { title:'Squid Game', type:'tv' },
-  { title:'Non siamo più vivi', type:'tv', search:'All of Us Are Dead' },
-  { title:'Death Note', type:'tv' },
-  { title:'Good Omens', type:'tv' },
-  { title:'Cleopatra', type:'tv', id:224387},
-  { title:'The Fresh Prince of Bel-Air', type:'tv' },
-  { title:'Suits', type:'tv' },
-  { title:'Squid Game - La Sfida', type:'tv', search:'Squid Game: The Challenge' },
-  { title:'La Regina degli Scacchi', type:'tv', search:"The Queen's Gambit" },
-  { title:'Berlin', type:'tv' },
-  { title:'LOL', type:'tv', id:120494 },
-  { title:'Money road', type:'tv', id:292792 },
-  { title:'I robinson', type:'tv', id:1759 },
-  { title:'Man vs Bee', type:'tv' },
-  { title:'Dinner Club', type:'tv' },
-  { title:'Bruno Barbieri 4 Hotel', type:'tv' },
-  { title:'Case a Prima Vista', type:'tv', id:226214 },
-  { title:'MasterChef', type:'tv', id:55630 },
-  { title:'Beast Games', type:'tv' }
-
-];
 function normalizeTitle(t){
   return t
     .replace(/’/g, "'")  // apostrofo curvo → apostrofo normale
@@ -1113,104 +852,142 @@ function normalizeTitle(t){
     .toLowerCase()
     .trim();
 }
-  async function fetchRemoteVersion(){
-  try{
-    const res = await fetch(`${GS_BASE}?action=version`);
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
+const MIGRATED_HTML_COUNT = 244;
+const MOVIES_STORAGE = "CATALOG_AG_SHEETS_ONLY_V1";
+const VERSION_STORAGE = "CATALOG_AG_SHEETS_ONLY_VERSION_V1";
+
+// Parser CSV: gestisce correttamente virgole, doppi apici e a capo tra virgolette.
+function parseCSV(csv) {
+  const rows = [];
+  let row = [], field = '', quoted = false;
+  csv = csv.replace(/^\uFEFF/, '');
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i];
+    if (ch === '"') {
+      if (quoted && csv[i + 1] === '"') { field += '"'; i++; }
+      else quoted = !quoted;
+    } else if (ch === ',' && !quoted) {
+      row.push(field); field = '';
+    } else if ((ch === '\n' || ch === '\r') && !quoted) {
+      if (ch === '\r' && csv[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      if (row.some(x => x.trim() !== '')) rows.push(row);
+      row = [];
+    } else {
+      field += ch;
+    }
+  }
+  if (quoted) throw new Error('CSV_NON_VALIDO');
+  row.push(field);
+  if (row.some(x => x.trim() !== '')) rows.push(row);
+  return rows;
+}
+
+async function fetchRemoteVersion() {
+  try {
+    const res = await fetch(`${GS_BASE}?action=version`, {cache:'no-store'});
+    if (!res.ok) return null;
     const data = await res.json();
-    return Number(data.version || 0);
-  }catch(e){
-    console.warn("Version check failed, fallback to cache");
+    const version = Number(data.version);
+    return Number.isFinite(version) && version > 0 ? version : null;
+  } catch (e) {
+    console.warn('Versione non disponibile:', e);
     return null;
   }
 }
-  function clearCatalogCache(){
-  localStorage.removeItem(CACHE_KEYS.version);
-  localStorage.removeItem(CACHE_KEYS.movies);
-  localStorage.removeItem(CACHE_KEYS.time);
-  localStorage.removeItem(CACHE_KEYS.heroGrid);
-}
-async function loadMoviesWithCache(){
 
-  const localVersion  = Number(localStorage.getItem(CACHE_KEYS.version));
+function clearCatalogCache() {
+  localStorage.removeItem(MOVIES_STORAGE);
+  localStorage.removeItem(VERSION_STORAGE);
+  Object.values(CACHE_KEYS).forEach(key => localStorage.removeItem(key));
+}
+
+function applySheetMovies(items) {
+  movies.length = 0;
+  movies.push(...items.map(m => ({...m, _fromSheet:true})));
+  sheetLoaded = true;
+}
+
+async function loadMoviesFromSheet() {
+  const url = SHEET_CSV_URL + '&_=' + Date.now();
+  const response = await fetch(url, {cache:'no-store'});
+  if (!response.ok) throw new Error('CSV_HTTP_' + response.status);
+  const rows = parseCSV(await response.text());
+  if (!rows.length) throw new Error('CSV_VUOTO');
+  const headers = rows.shift().map(h => h.trim().toLowerCase());
+  const required = ['title','type','id','search','todo'];
+  if (!required.every(name => headers.includes(name))) throw new Error('COLONNE_CSV_ERRATE');
+  const items = rows.map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (row[i] || '').trim());
+    return {
+      title: obj.title || '',
+      type: obj.type,
+      id: /^\d+$/.test(obj.id) ? Number(obj.id) : null,
+      search: obj.search || '',
+      todo: (obj.todo || 'no').toLowerCase()
+    };
+  }).filter(m => m.title && ['movie', 'tv'].includes(m.type));
+  // Blocca solo un feed chiaramente precedente alla migrazione.
+  if (items.length < MIGRATED_HTML_COUNT) {
+    throw new Error(`CSV_NON_AGGIORNATO: solo ${items.length} titoli visibili, attesi almeno ${MIGRATED_HTML_COUNT}.`);
+  }
+  applySheetMovies(items);
+  return items;
+}
+
+async function loadMoviesWithCache(force = false) {
   const remoteVersion = await fetchRemoteVersion();
-
-  // 🔁 se versione diversa → invalida cache
-  if (remoteVersion && remoteVersion !== localVersion){
-    clearCatalogCache();
+  if (!force && remoteVersion !== null) {
+    try {
+      const cacheVersion = Number(localStorage.getItem(VERSION_STORAGE));
+      const cached = JSON.parse(localStorage.getItem(MOVIES_STORAGE) || 'null');
+      if (cacheVersion === remoteVersion && Array.isArray(cached) && cached.length >= MIGRATED_HTML_COUNT) {
+        applySheetMovies(cached);
+        return cached;
+      }
+    } catch (e) { /* cache non valida, passiamo alla rete */ }
   }
-
-  const cached = localStorage.getItem(CACHE_KEYS.movies);
-
-  // 📦 CACHE VALIDA
-  if (cached){
-    console.log("⚡ Film caricati da cache");
-
-    const cachedMovies = JSON.parse(cached);
-
-    // 🔥 RIMUOVI vecchi film da foglio
-    for (let i = movies.length - 1; i >= 0; i--) {
-      if (movies[i]._fromSheet) movies.splice(i, 1);
-    }
-
-    // 🔥 REINSERISCI quelli da cache
-    cachedMovies.forEach(m => {
-      movies.push({ ...m, _fromSheet: true });
-    });
-    return cachedMovies;
-  }
-
-  // 🌐 PRIMO LOAD (rete)
-  console.log("🌐 Caricamento film da rete");
-
-  await loadMoviesFromSheet();
-
-  const sheetMovies = movies.filter(m => m._fromSheet);
-
-  localStorage.setItem(CACHE_KEYS.movies, JSON.stringify(sheetMovies));
-  localStorage.setItem(CACHE_KEYS.version, remoteVersion || 1);
-  localStorage.setItem(CACHE_KEYS.time, Date.now());
-
-  return sheetMovies;
-}
-  async function loadMoviesFromSheet() {
-  sheetLoaded = false; // forziamo sempre reload
-
   try {
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnH2Zqe52gw2KTWFy9QpxNcqq3giSz-Xn1oAIa9Sk7cgf8-aJ4_Klri9oe2Dq8EN7CiHx0Gx87B9Av/pub?output=csv";
-    const res = await fetch(sheetUrl);
-    const csv = await res.text();
-
-    const rows = csv.trim().split("\n").map(r => r.split(","));
-    const headers = rows.shift().map(h => h.trim().toLowerCase());
-
-    const sheetMovies = rows.map(row => {
-      const obj = {};
-      row.forEach((val, i) => (obj[headers[i]] = val.trim()));
-      return {
-        title: obj.title || "",
-        type: obj.type || "movie",
-        id: obj.id ? Number(obj.id) : null,
-        search: obj.search || "",
-        todo:   (obj.todo || "").toLowerCase()
-      };
-    });
-
-    // 🔥 Rimuovi prima tutti i film provenienti dal foglio
-    for (let i = movies.length - 1; i >= 0; i--) {
-      if (movies[i]._fromSheet) movies.splice(i, 1);
-    }
-
-    // 🔥 Aggiungi i film freschi dal foglio
-    sheetMovies.forEach(s => {
-      movies.push({ ...s, _fromSheet: true });
-    });
-
-    sheetLoaded = true;
-
+    const items = await loadMoviesFromSheet();
+    try {
+      localStorage.setItem(MOVIES_STORAGE, JSON.stringify(items));
+      if (remoteVersion !== null) localStorage.setItem(VERSION_STORAGE, String(remoteVersion));
+      else localStorage.removeItem(VERSION_STORAGE);
+    } catch (e) { console.warn('Cache non disponibile', e); }
+    return items;
   } catch (e) {
-    console.error("Errore caricamento Google Sheet:", e);
+    console.error('Errore caricamento Google Sheets:', e);
+    // In assenza di rete, dati in cache utilizzabili SOLO se sono già quelli migrati.
+    try {
+      const cached = JSON.parse(localStorage.getItem(MOVIES_STORAGE) || 'null');
+      if (Array.isArray(cached) && cached.length >= MIGRATED_HTML_COUNT) {
+        applySheetMovies(cached);
+        document.getElementById('catalogNotice').textContent =
+          'Connessione a Google Sheets non disponibile: stai vedendo una copia memorizzata. Le modifiche recenti potrebbero non apparire.';
+        return cached;
+      }
+    } catch (ignore) {}
+    sheetLoaded = false;
+    document.getElementById('catalogNotice').textContent =
+      'Impossibile caricare il catalogo da Google Sheets (' + e.message + '). Controlla che il CSV pubblicato contenga i 244 titoli migrati e aggiorna la pagina.';
+    throw e;
   }
 }
+
+async function refreshAfterEdit() {
+  // Il CSV pubblicato da Google può impiegare del tempo ad aggiornarsi.
+  clearCatalogCache();
+  try {
+    await loadMoviesWithCache(true);
+    document.getElementById('catalogNotice').textContent = '';
+    if (currentCatalogType) await renderGrid(currentCatalogType);
+  } catch (e) {
+    alert('Operazione salvata in Google Sheets, ma il CSV pubblico non risulta ancora aggiornato. Ricarica tra qualche istante.');
+  }
+}
+
 /* HOME -> CATALOGO */
 async function openCatalog(type){
   const home = document.getElementById('home');
@@ -1236,7 +1013,11 @@ async function openCatalog(type){
 
     currentCatalogType = type;
     activeCategory     = null;
-    await renderGrid(type);
+    if (!sheetLoaded) {
+      grid.textContent = "Catalogo non disponibile. Controlla il messaggio sopra.";
+    } else {
+      await renderGrid(type);
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, 350);
@@ -1253,7 +1034,7 @@ async function renderGrid(type){
       if (type === "movie")
         return m.type === "movie" && !(m.todo === "yes" || m.todo === "1" || m.todo === "true");
       if (type === "tv")
-        return m.type === "tv";
+        return m.type === "tv" && !(m.todo === "yes" || m.todo === "1" || m.todo === "true");
       if (type === "todo")
         return m.todo === "yes" || m.todo === "1" || m.todo === "true";
       return false;
@@ -1307,6 +1088,7 @@ async function addCardFor(m){
         <div class="title">${m.title}</div>
         <div class="meta">Non trovato su TMDb</div>
       </div>`;
+      appendAdminActions(card, m);
       grid.appendChild(card);
       return;
     }
@@ -1328,58 +1110,33 @@ async function addCardFor(m){
       ? (item.release_date   ? item.release_date.substring(0,4)   : '')
       : (item.first_air_date ? item.first_air_date.substring(0,4) : '');
 
-    // 🔒 Titolo “sicuro” per onclick admin (escape apostrofi)
-    const safeTitle = (m.title || "").replace(/'/g, "\\'");
-
-    // 5️⃣ Render HTML card (verticale)
-    if (!posterUrl){
-      // fallback senza immagine
-      card.innerHTML = `
-        <div style="padding:12px">
-          <div class="title">${m.title}</div>
-          <div class="meta">${year || ''}</div>
-          ${ADMIN_MODE ? `
-            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-              ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
-                <button onclick="event.stopPropagation(); adminMarkAsSeen(normalizeTitle('${safeTitle}'))"
-                        style="padding:5px 10px; font-size:12px; border-radius:8px; border:none; cursor:pointer;">
-                  Visto
-                </button>
-              ` : ""}
-
-              <button onclick="event.stopPropagation(); adminDeleteMovie(normalizeTitle('${safeTitle}'))"
-                      style="padding:5px 10px; font-size:12px; border-radius:8px; border:none; cursor:pointer; background:#b00020; color:#fff;">
-                Elimina
-              </button>
-            </div>
-          ` : ""}
-        </div>
-      `;
+    if (!posterUrl) {
+      const placeholder = document.createElement('div');
+      placeholder.style.padding = '12px';
+      const label = document.createElement('div');
+      label.className = 'title';
+      label.textContent = m.title;
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = year || '';
+      placeholder.append(label, meta);
+      card.appendChild(placeholder);
     } else {
-      card.innerHTML = `
-        <img src="${posterUrl}" alt="${(item.title || item.name || m.title)}" loading="lazy" decoding="async">
-        <div class="title">${m.title}</div>
-        <div class="meta">${year}</div>
-
-        ${ADMIN_MODE ? `
-          <div style="margin-top:6px; display:flex; gap:6px;">
-            ${m.todo === "yes" || m.todo === "1" || m.todo === "true" ? `
-              <button onclick="event.stopPropagation(); adminMarkAsSeen(normalizeTitle('${safeTitle}'))"
-                      style="padding:4px 8px; font-size:12px; border:none; border-radius:8px; cursor:pointer;">
-                Visto
-              </button>
-            ` : ""}
-
-            <button onclick="event.stopPropagation(); adminDeleteMovie(normalizeTitle('${safeTitle}'))"
-                    style="padding:4px 8px; font-size:12px; border:none; border-radius:8px; cursor:pointer; background:#b00020; color:#fff;">
-              Elimina
-            </button>
-          </div>
-        ` : ""}
-      `;
+      const image = document.createElement('img');
+      image.src = posterUrl;
+      image.alt = item.title || item.name || m.title;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      const label = document.createElement('div');
+      label.className = 'title';
+      label.textContent = m.title;
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = year;
+      card.append(image, label, meta);
     }
-
     card.onclick = () => showDetails(item.id, m.type);
+    appendAdminActions(card, m);
     grid.appendChild(card);
 
   } catch(e){
@@ -1457,100 +1214,94 @@ async function showDetails(id, type){
 }
 
 function closeModal(){ modal.style.display='none'; }
-// --- Funzioni Admin → chiamano Google Script ---
-function adminAddMovie(title, type = "movie") {
-  if (!ADMIN_MODE) return alert("Non sei admin.");
-  fetch(`${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}&todo=yes`)
-    .then(r => r.text())
-    .then(t => {
-      alert("Aggiunto: " + t);
-      clearCatalogCache(); 
-      renderGrid(currentCatalogType);
-    });
+// Comandi amministratore: nessun segreto salvato nell'HTML.
+function appendAdminActions(card, movie) {
+  if (!isAdmin() || !movie._fromSheet) return;
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:6px;padding:5px 8px 10px;';
+  const isTodo = ['yes', '1', 'true'].includes(movie.todo);
+  if (isTodo) {
+    const seen = document.createElement('button');
+    seen.textContent = 'Visto';
+    seen.style.cssText = 'padding:6px 10px;border:0;border-radius:8px;cursor:pointer;';
+    seen.onclick = e => { e.stopPropagation(); runMovieAction(movie, 'seen'); };
+    wrapper.appendChild(seen);
+  }
+  const del = document.createElement('button');
+  del.textContent = 'Elimina';
+  del.style.cssText = 'padding:6px 10px;border:0;border-radius:8px;cursor:pointer;background:#b00020;color:white;';
+  del.onclick = e => { e.stopPropagation(); runMovieAction(movie, 'delete'); };
+  wrapper.appendChild(del);
+  card.appendChild(wrapper);
 }
 
-function adminMarkAsSeen(title) {
-  if (!ADMIN_MODE) return alert("Non sei admin.");
-  fetch(`${GS_BASE}?action=update&key=${ADMIN_SECRET}&title=${encodeURIComponent(normalizeTitle(title))}&todo=no`)
-    .then(r => r.text())
-    .then(t => {
-      alert("Aggiornato: " + t);
-
-      sheetLoaded = false;               // ricarica foglio
-     loadMoviesFromSheet().then(() => {
-  grid.innerHTML = "";   // 🔥 SVUOTA LA GRIGLIA
-         clearCatalogCache(); 
-  renderGrid(currentCatalogType);
+async function runMovieAction(movie, action) {
+  if (!isAdmin()) return alert('Sessione scaduta. Effettua nuovamente l’accesso.');
+  if (adminBusy) return;
+  const verb = action === 'delete' ? 'ELIMINARE DEFINITIVAMENTE' : 'segnare come VISTO';
+  const kind = movie.type === 'tv' ? 'serie TV' : 'film';
+  if (!confirm(`Vuoi ${verb} il ${kind} "${movie.title}"?`)) return;
+  adminBusy = true;
+  try {
+    const response = await fetch(WORKER_BASE + '/movie/' + action, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer ' + adminToken},
+      body: JSON.stringify({title: movie.title, type: movie.type})
     });
-    });
-}
-function adminDeleteMovie(title) {
-  if (!ADMIN_MODE) return alert("Non sei admin.");
-  fetch(`${GS_BASE}?action=delete&key=${ADMIN_SECRET}&title=${encodeURIComponent(normalizeTitle(title))}`)
-    .then(r => r.text())
-    .then(t => {
-      alert("Eliminato: " + t);
-
-      sheetLoaded = false;
-      loadMoviesFromSheet().then(() => {
-        grid.innerHTML = "";
-        clearCatalogCache(); 
-        renderGrid(currentCatalogType);
-      });
-    });
-}
-function adminAddNewMovie() {
-  const title = document.getElementById("adminAddInput").value.trim();
-  const type  = document.getElementById("adminAddType").value;
-
-  if (!title) return alert("Inserisci un titolo.");
-
-  fetch(`${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}`)
-    .then(r => r.text())
-    .then(t => {
-      alert("Aggiunto: " + t);
-
-      // forza refresh dei dati
-      sheetLoaded = false;
-
-      loadMoviesFromSheet().then(() => {
-        grid.innerHTML = "";
-        renderGrid(currentCatalogType);
-      });
-    });
-}
-function openAddForm(){
-  document.getElementById("addModal").style.display = "flex";
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      if (response.status === 401) { adminToken = null; adminExpiresAt = 0; updateAdminUI(); }
+      throw new Error(result.error || 'OPERAZIONE_NON_RIUSCITA');
+    }
+    alert(action === 'delete' ? 'Titolo eliminato dal Google Sheets ufficiale.' : 'Titolo segnato come visto.');
+    await refreshAfterEdit();
+  } catch (e) {
+    alert('Attenzione: ' + e.message + '. Prima di riprovare verifica il Google Sheets ufficiale.');
+  } finally { adminBusy = false; }
 }
 
-function closeAddModal(){
-  document.getElementById("addModal").style.display = "none";
+function openAddForm() {
+  if (!isAdmin()) { updateAdminUI(); return alert('Effettua prima l’accesso amministratore.'); }
+  document.getElementById('addModal').style.display = 'flex';
 }
-
-function submitAddForm(){
-  const title = document.getElementById("addTitle").value.trim();
-  const id    = document.getElementById("addId").value.trim();
-  const type  = document.getElementById("addType").value;
-  const todo  = document.getElementById("addTodo").checked ? "yes" : "no";
-
-  if (!title) return alert("Inserisci un titolo!");
-
-  const url = `${GS_BASE}?action=add&key=${ADMIN_SECRET}&title=${encodeURIComponent(title)}&type=${type}&todo=${todo}${id ? "&id="+id : ""}`;
-
-  fetch(url)
-    .then(r => r.text())
-    .then(t => {
-      alert("Aggiunto: " + t);
-
-      closeAddModal();
-
-      sheetLoaded = false;
-
-      loadMoviesFromSheet().then(() => {
-        grid.innerHTML = "";
-        if (currentCatalogType) renderGrid(currentCatalogType);
-      });
+function closeAddModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+async function submitAddForm() {
+  if (!isAdmin()) { updateAdminUI(); return alert('Sessione scaduta. Effettua nuovamente l’accesso.'); }
+  if (adminBusy) return;
+  const title = document.getElementById('addTitle').value.trim();
+  const id = document.getElementById('addId').value.trim();
+  const type = document.getElementById('addType').value;
+  const todo = document.getElementById('addTodo').checked ? 'yes' : 'no';
+  if (!title || title.length > 200 || /^[=+\-@]/.test(title)) return alert('Titolo non valido.');
+  if (id && !/^\d{1,12}$/.test(id)) return alert('ID TMDb non valido.');
+  if (!confirm(`Aggiungere "${title}" al catalogo ufficiale?`)) return;
+  const button = document.getElementById('submitAddBtn');
+  adminBusy = true;
+  button.disabled = true;
+  try {
+    const response = await fetch(WORKER_BASE + '/movie/add', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', Authorization:'Bearer ' + adminToken},
+      body: JSON.stringify({title, id, type, todo, search:''})
     });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      if (response.status === 401) { adminToken = null; adminExpiresAt = 0; updateAdminUI(); }
+      throw new Error(result.error === 'ALREADY_EXISTS' ? 'Questo titolo è già presente nel foglio.' : (result.error || 'OPERAZIONE_NON_RIUSCITA'));
+    }
+    alert('Titolo aggiunto al Google Sheets ufficiale.');
+    closeAddModal();
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addId').value = '';
+    await refreshAfterEdit();
+  } catch (e) {
+    alert('Attenzione: ' + e.message + '. Prima di riprovare controlla il Google Sheets ufficiale.');
+  } finally {
+    adminBusy = false;
+    button.disabled = false;
+  }
 }
 /* HOME / RESET / RICERCA */
 function tornaHomeAnimated(){
@@ -1600,7 +1351,7 @@ searchInput.addEventListener('input', () => {
   ).length;
 
   const tvCount = movies.filter(
-    m => m.type === "tv"
+    m => m.type === "tv" && !(m.todo === "yes" || m.todo === "1" || m.todo === "true")
   ).length;
 
   const todoCount = movies.filter(
@@ -1705,8 +1456,14 @@ async function renderHeroGrid() {
 }
 /* AVVIO COMPLETO */
 (async () => {
-  await loadMoviesWithCache();
-  await renderHeroGrid();
+  updateAdminUI();
+  try {
+    await loadMoviesWithCache();
+    await renderHeroGrid();
+  } catch (e) {
+    console.error("Catalogo non pronto:", e);
+  }
+  updateAdminUI();
 })();
 /* NASCONDI BARRA DI RICERCA QUANDO SCROLLI */
 window.addEventListener("scroll", () => {
@@ -1720,99 +1477,3 @@ window.addEventListener("scroll", () => {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
