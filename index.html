@@ -651,6 +651,24 @@ html, body{
     opacity: 0.85;
   }
 }
+
+/* Ricerca TMDb integrata nell'aggiunta */
+.ag-add-field{display:block;margin:12px 0 6px;font-weight:600;font-size:13px;color:#cedcf0}
+.ag-add-input{width:100%;padding:12px;border-radius:12px;border:1px solid #354c69;background:#19283b;color:#fff;font:inherit;outline:none}
+.ag-add-input:focus{border-color:#64b5f6;box-shadow:0 0 0 3px #2196f322}
+.ag-add-layout{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ag-add-results{max-height:250px;overflow-y:auto;margin:8px 0;border-radius:12px}
+.ag-add-result{display:flex;width:100%;align-items:center;gap:12px;text-align:left;background:#18273b;color:#fff;border:1px solid #2d4059;border-radius:12px;padding:9px;margin:0 0 7px;cursor:pointer}
+.ag-add-result:hover,.ag-add-result:focus-visible{background:#223a57;border-color:#65b5f4}
+.ag-add-result img,.ag-add-placeholder{width:49px;height:74px;object-fit:cover;border-radius:7px;flex:none;background:#263548}
+.ag-add-result strong{display:block;font-size:14px;line-height:1.3}
+.ag-add-result small{display:block;color:#a8bfd9;margin-top:5px}
+.ag-add-note{font-size:12px;color:#a9bdd4;margin:6px 0}
+.ag-add-picked{display:flex;align-items:center;gap:12px;background:#12334a;border:1px solid #357ca9;padding:10px;border-radius:12px;margin:10px 0}
+.ag-add-picked img,.ag-add-picked .ag-add-placeholder{width:47px;height:70px;object-fit:cover;border-radius:7px}
+.ag-add-link{background:none;color:#8ccbff;border:0;text-decoration:underline;cursor:pointer;padding:8px 0;font:inherit;font-size:13px}
+.ag-add-submit{background:#2185d0;color:white;border:none;border-radius:12px;padding:13px;width:100%;font-size:15px;font-weight:700;cursor:pointer;margin-top:13px}
+.ag-add-submit:disabled{opacity:.5;cursor:wait}
 </style>
 </head>
 <body>
@@ -740,31 +758,34 @@ html, body{
     </form>
   </div>
 </div>
-<div id="addModal" class="modal" style="display:none;" onclick="if(event.target===this) closeAddModal()">
-  <div class="inner" style="max-width:500px;">
-    <div class="close" onclick="closeAddModal()">&times;</div>
-    <h2>Aggiungi nuovo titolo</h2>
-
-    <label>Titolo:</label>
-    <input id="addTitle" style="width:100%; margin-bottom:10px; padding:6px;">
-
-    <label>ID TMDb (facoltativo):</label>
-    <input id="addId" style="width:100%; margin-bottom:10px; padding:6px;">
-
-    <label>Tipo:</label>
-    <select id="addType" style="width:100%; margin-bottom:10px; padding:6px;">
+<div id="addModal" class="modal" style="display:none" onclick="if(event.target===this) closeAddModal()">
+  <div class="inner" style="max-width:520px" role="dialog" aria-modal="true" aria-labelledby="agAddHeading">
+    <button type="button" class="close" onclick="closeAddModal()" aria-label="Chiudi">&times;</button>
+    <h2 id="agAddHeading">Aggiungi al catalogo</h2>
+    <label class="ag-add-field" for="addType">Cosa vuoi aggiungere?</label>
+    <select id="addType" class="ag-add-input" onchange="agAddTypeChanged()">
       <option value="movie">Film</option>
       <option value="tv">Serie TV</option>
     </select>
-
-    <label style="display:flex; align-items:center; gap:6px;">
-      <input type="checkbox" id="addTodo">
-      Inserisci tra i titoli "Da vedere"
+    <div id="agSearchPanel">
+      <label class="ag-add-field" for="agTmdbQuery">Cerca su TMDb</label>
+      <input id="agTmdbQuery" class="ag-add-input" type="search" placeholder="Scrivi il titolo del film..." autocomplete="off" oninput="agTmdbQueryChanged()">
+      <p id="agSearchStatus" class="ag-add-note" role="status" aria-live="polite">Scrivi almeno 2 caratteri per cercare.</p>
+      <div id="agTmdbResults" class="ag-add-results" aria-label="Risultati TMDb"></div>
+      <div id="agPicked" class="ag-add-picked" style="display:none"></div>
+      <button type="button" class="ag-add-link" onclick="agToggleManual(true)">Non lo trovi? Inserisci manualmente</button>
+    </div>
+    <div id="agManualPanel" style="display:none">
+      <label class="ag-add-field" for="addTitle">Titolo</label>
+      <input id="addTitle" class="ag-add-input" maxlength="200" placeholder="Titolo da salvare">
+      <label class="ag-add-field" for="addId">ID TMDb (facoltativo)</label>
+      <input id="addId" class="ag-add-input" inputmode="numeric" placeholder="Lascia vuoto per la ricerca automatica">
+      <button type="button" class="ag-add-link" onclick="agToggleManual(false)">Torna alla ricerca TMDb</button>
+    </div>
+    <label class="ag-add-field" style="display:flex;align-items:center;gap:9px;font-size:14px">
+      <input type="checkbox" id="addTodo"> Da vedere (non ancora visto)
     </label>
-
-    <button id="submitAddBtn" onclick="submitAddForm()" style="margin-top:12px; width:100%; padding:10px; border-radius:8px; cursor:pointer;">
-      Aggiungi al catalogo
-    </button>
+    <button type="button" id="submitAddBtn" class="ag-add-submit" onclick="submitAddForm()">Aggiungi al catalogo</button>
   </div>
 </div>
 <script>
@@ -1307,25 +1328,183 @@ async function runMovieAction(movie, action) {
   } finally { adminBusy = false; }
 }
 
+// Ricerca TMDb all'interno del pulsante + (solo lettura, senza segreti admin).
+let agTmdbSelected = null;
+let agTmdbTimer = null;
+let agTmdbController = null;
+let agTmdbGeneration = 0;
+let agManualMode = false;
+function agAbortSearch() {
+  clearTimeout(agTmdbTimer);
+  if (agTmdbController) agTmdbController.abort();
+  agTmdbController = null;
+  agTmdbGeneration++;
+}
+function agSearchStatus(text) {
+  document.getElementById('agSearchStatus').textContent = text;
+}
+function agClearPicked() {
+  agTmdbSelected = null;
+  document.getElementById('agPicked').style.display = 'none';
+  document.getElementById('agPicked').replaceChildren();
+}
+function agToggleManual(manual) {
+  agManualMode = Boolean(manual);
+  document.getElementById('agManualPanel').style.display = agManualMode ? 'block' : 'none';
+  document.getElementById('agSearchPanel').style.display = agManualMode ? 'none' : 'block';
+  if (agManualMode) {
+    agAbortSearch();
+    agClearPicked();
+    document.getElementById('addTitle').focus();
+  } else {
+    document.getElementById('agTmdbQuery').focus();
+    agTmdbQueryChanged();
+  }
+}
+function agAddTypeChanged() {
+  agAbortSearch();
+  agClearPicked();
+  document.getElementById('agTmdbResults').replaceChildren();
+  document.getElementById('agTmdbQuery').placeholder =
+    document.getElementById('addType').value === 'tv' ? 'Scrivi il titolo della serie...' : 'Scrivi il titolo del film...';
+  if (!agManualMode) agTmdbQueryChanged();
+}
+function agTmdbQueryChanged() {
+  agAbortSearch();
+  agClearPicked();
+  document.getElementById('agTmdbResults').replaceChildren();
+  if (agManualMode) return;
+  const q = document.getElementById('agTmdbQuery').value.trim();
+  if (q.length < 2) {
+    agSearchStatus('Scrivi almeno 2 caratteri per cercare.');
+    return;
+  }
+  agSearchStatus('Ricerca in corso...');
+  const generation = agTmdbGeneration;
+  agTmdbTimer = setTimeout(() => agRunTmdbSearch(q, generation), 400);
+}
+async function agRunTmdbSearch(query, generation) {
+  const type = document.getElementById('addType').value;
+  const controller = new AbortController();
+  agTmdbController = controller;
+  try {
+    const url = `${API_BASE}/search/${type}?api_key=${encodeURIComponent(API_KEY)}&language=it-IT&query=${encodeURIComponent(query)}&page=1&include_adult=false`;
+    const response = await fetch(url, {signal: controller.signal});
+    if (!response.ok) throw new Error('TMDb non disponibile');
+    const data = await response.json();
+    if (generation !== agTmdbGeneration || agManualMode) return;
+    if (!Array.isArray(data.results)) throw new Error('Risposta TMDb non valida');
+    const results = data.results.filter(item => Number.isSafeInteger(item.id) && item.id > 0).slice(0, 12);
+    const list = document.getElementById('agTmdbResults');
+    list.replaceChildren();
+    for (const item of results) {
+      const title = (type === 'tv' ? item.name : item.title) || item.name || item.title || '';
+      if (!title) continue;
+      const date = (type === 'tv' ? item.first_air_date : item.release_date) || '';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'ag-add-result';
+      if (item.poster_path && /^\/[A-Za-z0-9/_-]+\.(jpg|png|webp)$/i.test(item.poster_path)) {
+        const img = document.createElement('img');
+        img.src = 'https://image.tmdb.org/t/p/w92' + item.poster_path;
+        img.alt = '';
+        img.loading = 'lazy';
+        button.appendChild(img);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'ag-add-placeholder';
+        button.appendChild(placeholder);
+      }
+      const meta = document.createElement('span');
+      const name = document.createElement('strong');
+      name.textContent = title;
+      const year = document.createElement('small');
+      year.textContent = `${date.slice(0, 4) || 'Anno non disponibile'} · ${type === 'tv' ? 'Serie TV' : 'Film'}`;
+      meta.append(name, year);
+      button.appendChild(meta);
+      button.addEventListener('click', () => agPickTmdbResult({title, id: item.id, type, poster: item.poster_path || '', year: date.slice(0,4)}));
+      list.appendChild(button);
+    }
+    agSearchStatus(results.length ? 'Seleziona il titolo corretto dai risultati.' : 'Nessun risultato. Puoi utilizzare l’inserimento manuale.');
+  } catch (error) {
+    if (error.name !== 'AbortError' && generation === agTmdbGeneration) {
+      agSearchStatus('Ricerca non riuscita. Controlla la connessione o usa l’inserimento manuale.');
+    }
+  } finally {
+    if (agTmdbController === controller) agTmdbController = null;
+  }
+}
+function agPickTmdbResult(item) {
+  agAbortSearch();
+  agTmdbSelected = item;
+  document.getElementById('agTmdbResults').replaceChildren();
+  agSearchStatus('Titolo selezionato. Ora puoi aggiungerlo al catalogo.');
+  const picked = document.getElementById('agPicked');
+  picked.replaceChildren();
+  if (item.poster && /^\/[A-Za-z0-9/_-]+\.(jpg|png|webp)$/i.test(item.poster)) {
+    const img = document.createElement('img');
+    img.src = 'https://image.tmdb.org/t/p/w92' + item.poster;
+    img.alt = '';
+    picked.appendChild(img);
+  }
+  const text = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = item.title;
+  const details = document.createElement('div');
+  details.className = 'ag-add-note';
+  details.textContent = `${item.year || 'Anno non disponibile'} · ID TMDb ${item.id}`;
+  const change = document.createElement('button');
+  change.className = 'ag-add-link';
+  change.type = 'button';
+  change.textContent = 'Cambia scelta';
+  change.onclick = () => agTmdbQueryChanged();
+  text.append(title, details, change);
+  picked.appendChild(text);
+  picked.style.display = 'flex';
+}
+function agResetAddForm() {
+  agAbortSearch();
+  agManualMode = false;
+  agClearPicked();
+  document.getElementById('addType').value = 'movie';
+  document.getElementById('addTodo').checked = false;
+  document.getElementById('agTmdbQuery').value = '';
+  document.getElementById('addTitle').value = '';
+  document.getElementById('addId').value = '';
+  document.getElementById('agTmdbResults').replaceChildren();
+  document.getElementById('agSearchPanel').style.display = 'block';
+  document.getElementById('agManualPanel').style.display = 'none';
+  agSearchStatus('Scrivi almeno 2 caratteri per cercare.');
+}
 async function openAddForm() {
-  // Il + è sempre visibile: chiede il login solo quando necessario.
   if (!isAdmin()) await loginFromSite();
-  if (!isAdmin()) return; // Password errata o accesso annullato.
+  if (!isAdmin()) return;
+  agResetAddForm();
   document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('agTmdbQuery').focus();
 }
 function closeAddModal() {
+  if (adminBusy) return;
+  agAbortSearch();
   document.getElementById('addModal').style.display = 'none';
 }
 async function submitAddForm() {
   if (!isAdmin()) { updateAdminUI(); return alert('Sessione scaduta. Effettua nuovamente l’accesso.'); }
   if (adminBusy) return;
-  const title = document.getElementById('addTitle').value.trim();
-  const id = document.getElementById('addId').value.trim();
+  const chosen = agManualMode ? null : agTmdbSelected;
+  if (!agManualMode && !chosen) return alert('Seleziona prima un film o una serie dai risultati TMDb, oppure scegli l’inserimento manuale.');
+  const title = chosen ? chosen.title : document.getElementById('addTitle').value.trim();
+  const id = chosen ? String(chosen.id) : document.getElementById('addId').value.trim();
   const type = document.getElementById('addType').value;
   const todo = document.getElementById('addTodo').checked ? 'yes' : 'no';
   if (!title || title.length > 200 || /^[=+\-@]/.test(title)) return alert('Titolo non valido.');
   if (id && !/^\d{1,12}$/.test(id)) return alert('ID TMDb non valido.');
-  if (!confirm(`Aggiungere "${title}" al catalogo ufficiale?`)) return;
+  if (chosen && chosen.type !== type) return alert('Hai cambiato il tipo. Seleziona di nuovo il titolo.');
+  // Il server continua a controllare i duplicati in modo definitivo.
+  if (movies.some(m => normalizeTitle(m.title) === normalizeTitle(title) && m.type === type)) {
+    return alert('Questo titolo sembra già presente nel catalogo. Nessuna modifica effettuata.');
+  }
+  if (!confirm(`Aggiungere "${title}" (${type === 'tv' ? 'Serie TV' : 'Film'}) al catalogo ufficiale?`)) return;
   const button = document.getElementById('submitAddBtn');
   adminBusy = true;
   button.disabled = true;
@@ -1341,12 +1520,11 @@ async function submitAddForm() {
       throw new Error(result.error === 'ALREADY_EXISTS' ? 'Questo titolo è già presente nel foglio.' : (result.error || 'OPERAZIONE_NON_RIUSCITA'));
     }
     alert('Titolo aggiunto al Google Sheets ufficiale.');
-    closeAddModal();
-    document.getElementById('addTitle').value = '';
-    document.getElementById('addId').value = '';
+    document.getElementById('addModal').style.display = 'none';
+    agResetAddForm();
     await refreshAfterEdit();
-  } catch (e) {
-    alert('Attenzione: ' + e.message + '. Prima di riprovare controlla il Google Sheets ufficiale.');
+  } catch (error) {
+    alert('Attenzione: ' + error.message + '. Prima di riprovare controlla il Google Sheets ufficiale.');
   } finally {
     adminBusy = false;
     button.disabled = false;
