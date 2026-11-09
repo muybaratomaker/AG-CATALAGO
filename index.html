@@ -782,6 +782,86 @@ body.ag-modal-open{overflow:hidden}
  .ag-rating img{width:19px;height:19px}
 }
 
+
+/* ===== WEB 3.1: poster più grandi, comandi unificati e sfondo cinema ===== */
+#catalog{
+  position:relative;
+  isolation:isolate;
+  min-height:100vh;
+  padding-top:18px;
+  background:linear-gradient(165deg,#06162d 0%,#040d1d 54%,#06172c 100%);
+}
+#catalog::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 38% 38% at 4% 18%,rgba(22,112,184,.32),transparent 80%),
+    radial-gradient(ellipse 35% 31% at 94% 58%,rgba(43,62,155,.24),transparent 80%),
+    radial-gradient(ellipse 45% 29% at 43% 94%,rgba(15,111,153,.19),transparent 85%);
+}
+#catalog::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.16;
+  background-image:radial-gradient(circle,rgba(130,188,236,.48) .65px,transparent 1px);
+  background-size:29px 29px;
+  mask-image:linear-gradient(180deg,transparent,black 14%,black 78%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,transparent,black 14%,black 78%,transparent);
+}
+#catalog>div{position:relative;z-index:1;width:100%}
+#catalog-title{width:min(100%,1260px);margin:7px auto 15px;text-align:left;padding-left:4px}
+.controls{
+  width:100%;max-width:1260px;
+  margin-bottom:12px;
+  padding:10px 12px;
+  border-radius:18px;
+  gap:9px;
+  box-shadow:0 12px 30px rgba(0,0,0,.20);
+}
+.controls .filters{gap:6px}
+.controls .filters button{padding:8px 12px}
+.controls .search{margin-left:auto;min-width:185px}
+.controls .search input{width:min(270px,26vw)}
+.ag-controls-actions{display:flex;align-items:center;gap:8px;flex:none}
+.ag-add-control{background:#248bd6;color:white;font-weight:750;font-size:27px;border-color:#5cb8fa}
+.ag-add-control:hover{background:#31a6fa;color:#061327}
+.ag-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#catalogNotice{margin:2px auto 7px}
+.grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  max-width:1260px;
+  gap:16px;
+}
+.grid.ag-compact{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.card{box-shadow:0 14px 28px rgba(0,0,0,.28)}
+@media (max-width:1090px){
+ .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .grid.ag-compact{grid-template-columns:repeat(5,minmax(0,1fr))}
+ .controls{gap:8px}
+ .controls .filters button{padding:8px 10px;font-size:12px}
+}
+@media (max-width:850px){
+ .controls{flex-wrap:wrap}
+ .controls .filters{order:3;width:100%;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+ .controls .search{order:1;flex:1;min-width:165px}
+ .controls .search input{width:100%}
+ .ag-controls-actions{order:2}
+ .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+ .grid.ag-compact{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+}
+@media (max-width:600px){
+ #catalog{padding:10px 10px 50px}
+ #catalog-title{margin:10px auto 9px}
+ .controls{padding:9px;gap:7px;margin-bottom:10px}
+ .controls .logo-mini{width:34px;height:34px}
+ .controls .search{flex:1;min-width:0;order:1}
+ .controls .search input{height:41px}
+ .ag-controls-actions{order:2;gap:6px}
+ .ag-icon-btn{width:39px;height:41px;font-size:19px}
+ .controls .filters{order:3;justify-content:flex-start;width:100%}
+ .controls .filters button{white-space:nowrap}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ .grid.ag-compact{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+
 </style>
 </head>
 <body>
@@ -837,6 +917,10 @@ body.ag-modal-open{overflow:hidden}
         <input id="searchInput" type="search" aria-label="Cerca per titolo" placeholder="Cerca per titolo..." />
         <button type="button" id="agActorFilterToggle" class="ag-icon-btn" aria-label="Apri filtro attori" title="Filtra per attore" onclick="agToggleActorFilter()">☷</button>
     </div>
+    <div class="ag-controls-actions">
+      <button type="button" id="agGridToggle" class="ag-icon-btn" aria-label="Passa alla griglia compatta" onclick="agToggleGrid()" title="Cambia griglia">▦</button>
+      <button type="button" id="agCatalogAdd" class="ag-icon-btn ag-add-control" aria-label="Aggiungi film o serie TV" title="Aggiungi film o serie TV" onclick="openAddForm()">+</button>
+    </div>
 
 </div>
     <section id="agActorFilter" class="ag-actor-filter" aria-label="Filtro per attore">
@@ -849,12 +933,7 @@ body.ag-modal-open{overflow:hidden}
       </div>
       <p id="agActorStatus" class="ag-active-actor" role="status"></p>
     </section>
-    <div class="ag-grid-toolbar">
-      <span id="agVisibleCount" role="status">Caricamento titoli...</span>
-      <div class="ag-grid-actions">
-        <button type="button" id="agGridToggle" class="ag-icon-btn" aria-label="Passa alla griglia compatta" onclick="agToggleGrid()" title="Cambia griglia">▦</button>
-      </div>
-    </div>
+    <span id="agVisibleCount" class="ag-sr-only" role="status" aria-live="polite"></span>
     <p id="catalogNotice" role="status" style="color:#ffcc80;text-align:center;max-width:700px;"></p>
     <div class="grid" id="grid"></div>
     <div id="catalog-footer"></div>
